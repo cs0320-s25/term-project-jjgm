@@ -29,7 +29,7 @@ public class FirebaseUtilities implements StorageInterface {
     String workingDirectory = System.getProperty("user.dir");
     System.out.println("Working directory: " + workingDirectory);
     Path firebaseConfigPath =
-        Paths.get(workingDirectory, "server", "src", "main", "resources", "firebase_config.json");
+        Paths.get(workingDirectory, "src", "main", "resources", "firebase_config.json");
     System.out.println("Looking for firebase_config.json at: " + firebaseConfigPath.toString());
     // ^-- if your /resources/firebase_config.json exists but is not found,
     // try printing workingDirectory and messing around with this path.

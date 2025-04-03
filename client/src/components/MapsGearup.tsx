@@ -1,6 +1,7 @@
 import { useState } from "react";
 import FirestoreDemo from "./FirestoreDemo";
 import Mapbox from "./Mapbox";
+import "../styles/MapStyles.css";
 
 enum Section {
   FIRESTORE_DEMO = "FIRESTORE_DEMO",
