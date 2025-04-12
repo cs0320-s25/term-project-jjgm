@@ -1,8 +1,8 @@
 import { FeatureCollection } from "geojson";
 import { FillLayer } from "react-map-gl";
-import rl_data from "../geodata/fullDownload.json";
+// import rl_data from "../geodata/fullDownload.json";
 
-const propertyName = "grade";
+const propertyName = "holc_grade";
 export const geoLayer: FillLayer = {
   id: "geo_data",
   type: "fill",
@@ -36,6 +36,6 @@ function isFeatureCollection(json: any): json is FeatureCollection {
   return json.type === "FeatureCollection";
 }
 
-export function overlayData(): GeoJSON.FeatureCollection | undefined {
-  return isFeatureCollection(rl_data) ? rl_data : undefined;
-}
+// export function overlayData(): GeoJSON.FeatureCollection | undefined {
+//   return isFeatureCollection(rl_data) ? rl_data : undefined;
+// }

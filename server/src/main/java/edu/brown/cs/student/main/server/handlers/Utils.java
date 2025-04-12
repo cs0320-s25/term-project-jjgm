@@ -15,4 +15,10 @@ public class Utils {
 
     return adapter.toJson(map);
   }
+
+  public static String toMoshiJson(Object object) {
+    Moshi moshi = new Moshi.Builder().build();
+    JsonAdapter<Object> adapter = moshi.adapter(Object.class);
+    return adapter.toJson(object);
+  }
 }

@@ -2,13 +2,19 @@ package edu.brown.cs.student.main.server;
 
 import static spark.Spark.after;
 
+import edu.brown.cs.student.main.server.datasource.DefaultDataSource;
+import edu.brown.cs.student.main.server.datasource.GeoDataSource;
+import edu.brown.cs.student.main.server.datasource.cache.CacheDataSource;
 import edu.brown.cs.student.main.server.handlers.AddPinHandler;
 import edu.brown.cs.student.main.server.handlers.AddWordHandler;
 import edu.brown.cs.student.main.server.handlers.ClearPinsHandler;
 import edu.brown.cs.student.main.server.handlers.ClearUserHandler;
 import edu.brown.cs.student.main.server.handlers.ListPinsHandler;
 import edu.brown.cs.student.main.server.handlers.ListWordsHandler;
+import edu.brown.cs.student.main.server.handlers.RedLiningHandler;
 import edu.brown.cs.student.main.server.handlers.SearchAreasHandler;
+import edu.brown.cs.student.main.server.parser.GeoJsonObject;
+import edu.brown.cs.student.main.server.parser.JSONParser2;
 import edu.brown.cs.student.main.server.storage.FirebaseUtilities;
 import edu.brown.cs.student.main.server.storage.StorageInterface;
 import java.io.IOException;
@@ -53,6 +59,16 @@ public class Server {
             System.out.println("ERROR");
             return "404 Not Found - The requested endpoint does not exist.";
           });
+
+      JSONParser2 parser = new JSONParser2();
+      parser.createGeoJson();
+      GeoJsonObject geoData = parser.parsedJSON;
+
+      GeoDataSource defaulDataSource = new DefaultDataSource(geoData);
+      GeoDataSource cacheDataSource = new CacheDataSource(defaulDataSource, 10);
+
+      Spark.get("/redlining", new RedLiningHandler(cacheDataSource));
+
       Spark.init();
       Spark.awaitInitialization();
 
