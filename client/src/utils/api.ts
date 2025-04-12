@@ -20,7 +20,7 @@ async function queryAPI(
 }
 
 export async function addPin(uid: string, pinId: string, lat: number, lng: number, timestamp: number) {
-  console.log("Calling add-pin API with:", { uid, id: pinId, lat, lng, timestamp });
+  console.log("calling add-pin API with:", { uid, id: pinId, lat, lng, timestamp });
   return await queryAPI("add-pin", {
     uid: uid,
     id: pinId,
