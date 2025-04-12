@@ -8,9 +8,11 @@ import edu.brown.cs.student.main.server.handlers.ClearPinsHandler;
 import edu.brown.cs.student.main.server.handlers.ClearUserHandler;
 import edu.brown.cs.student.main.server.handlers.ListPinsHandler;
 import edu.brown.cs.student.main.server.handlers.ListWordsHandler;
+import edu.brown.cs.student.main.server.handlers.SearchAreasHandler;
 import edu.brown.cs.student.main.server.storage.FirebaseUtilities;
 import edu.brown.cs.student.main.server.storage.StorageInterface;
 import java.io.IOException;
+import java.nio.file.Paths;
 import spark.Filter;
 import spark.Spark;
 
@@ -39,6 +41,11 @@ public class Server {
       Spark.get("add-word", new AddWordHandler(firebaseUtils));
       Spark.get("list-words", new ListWordsHandler(firebaseUtils));
       Spark.get("clear-user", new ClearUserHandler(firebaseUtils));
+
+      String workingDirectory = System.getProperty("user.dir");
+      String geoJsonPath =
+          Paths.get(workingDirectory, "src", "main", "resources", "fullDownload.json").toString();
+      Spark.get("search-areas", new SearchAreasHandler(geoJsonPath));
 
       Spark.notFound(
           (request, response) -> {

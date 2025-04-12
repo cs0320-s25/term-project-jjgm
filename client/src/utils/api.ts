@@ -42,6 +42,12 @@ export async function clearUserPins(uid: string) {
   });
 }
 
+export async function searchAreas(keyword: string) {
+  return await queryAPI("search-areas", {
+    keyword: keyword
+  });
+}
+
 export async function addWord(uid: string, word: string) {
   return await queryAPI("add-word", {
     uid: uid,

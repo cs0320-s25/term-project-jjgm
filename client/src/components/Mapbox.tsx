@@ -9,7 +9,7 @@ import Map, {
 } from "react-map-gl";
 import { geoLayer, overlayData } from "../utils/overlay";
 import { useUser } from "@clerk/clerk-react";
-import { addPin, listPins, clearUserPins } from "../utils/api";
+import { addPin, listPins, clearUserPins, searchAreas } from "../utils/api";
 
 const MAPBOX_API_KEY = process.env.MAPBOX_TOKEN;
 if (!MAPBOX_API_KEY) {
@@ -28,17 +28,12 @@ export interface PinData {
   timestamp: number;
 }
 
-// providence coordinates and zoom level
+// Providence coordinates and zoom level
 const ProvidenceLatLong: LatLong = {
   lat: 41.825,
   long: -71.418,
 };
 const initialZoom = 11;
-
-function onMapClick(e: MapLayerMouseEvent) {
-  console.log(e.lngLat.lat);
-  console.log(e.lngLat.lng);
-}
 
 export default function Mapbox() {
   const [viewState, setViewState] = useState({
@@ -50,16 +45,19 @@ export default function Mapbox() {
   const [overlay, setOverlay] = useState<GeoJSON.FeatureCollection | undefined>(
     undefined
   );
-
+  
   const [pins, setPins] = useState<PinData[]>([]);
+  const [searchKeyword, setSearchKeyword] = useState<string>("");
+  const [matchingAreaIds, setMatchingAreaIds] = useState<string[]>([]);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  
   const { user } = useUser();
 
   useEffect(() => {
     setOverlay(overlayData());
-    
     refreshPins();
     
-    // periodically refresh pins for future
+    // periodically refresh pins
     const interval = setInterval(refreshPins, 5000);
     
     return () => clearInterval(interval);
@@ -71,9 +69,8 @@ export default function Mapbox() {
         console.log("API response:", data);
         
         if (data && data.response_type === "success" && Array.isArray(data.pins)) {
-          // convert the pins from the API to the PinData format
+          // Convert the pins from the API to the PinData format
           const convertedPins: PinData[] = data.pins.map((pin: any) => {
-            console.log("Processing pin:", pin);
             return {
               id: pin.id || `pin-${Date.now()}`,
               location: {
@@ -111,7 +108,7 @@ export default function Mapbox() {
       timestamp: Date.now(),
     };
     
-    // add the pin to the API
+    // Add the pin to the API
     addPin(
       user.id,
       newPin.id,
@@ -120,7 +117,8 @@ export default function Mapbox() {
       newPin.timestamp
     )
       .then(() => {
-        refreshPins();
+        // Add a small delay to ensure Firebase has time to commit the data
+        setTimeout(refreshPins, 500);
       })
       .catch((error) => {
         console.error("Error adding pin:", error);
@@ -138,10 +136,99 @@ export default function Mapbox() {
         console.error("Error clearing pins:", error);
       });
   };
+  
+  const handleSearch = () => {
+    console.log("searching keywords......")
+    if (!searchKeyword) {
+      setMatchingAreaIds([]);
+      return;
+    }
+    
+    setIsSearching(true);
+    
+    searchAreas(searchKeyword)
+      .then((data) => {
+        if (data && data.response_type === "success" && data.matching_ids) {
+          // debug logging
+          console.log("Backend returned matching IDs:", data.matching_ids);
+          
+          const ids = Array.isArray(data.matching_ids) ? data.matching_ids : [];
+          console.log("Setting matched IDs:", ids);
+          
+          setMatchingAreaIds(ids);
+        } else {
+          console.log("No matching areas found:", data);
+          setMatchingAreaIds([]);
+        }
+      })
+      .catch((error) => {
+        console.error("Error searching areas:", error);
+        setMatchingAreaIds([]);
+      })
+      .finally(() => {
+        setIsSearching(false);
+      });
+  };
+  
+  const handleClearSearch = () => {
+    setSearchKeyword("");
+    setMatchingAreaIds([]);
+  };
+
+  /**
+  const highlightedLayer: any = {
+    id: "highlighted-areas",
+    type: "fill",
+    paint: {
+      "fill-color": "#FF9900",
+      "fill-opacity": 0.7,
+    },
+    filter: ["in", ["get", "holc_id"], ...matchingAreaIds]
+  };*/
+  
+  const highlightedLayer: any = {
+    id: "highlighted-areas",
+    type: "fill",
+    paint: {
+      "fill-color": "#FF9900",
+      "fill-opacity": 0.7,
+    },
+    filter: ["in", ["get", "area_id"], ["literal", matchingAreaIds]]
+  };
 
   return (
     <div className="map-container">
       <div className="map-controls">
+        <div className="search-controls">
+          <input
+            type="text"
+            placeholder="Search for areas by keyword..."
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+            disabled={isSearching}
+            aria-label="area-search"
+          />
+          <button 
+            onClick={handleSearch}
+            disabled={isSearching || !searchKeyword}
+            aria-label="search-button"
+          >
+            {isSearching ? "Searching..." : "Search"}
+          </button>
+          {matchingAreaIds.length > 0 && (
+            <button
+              onClick={handleClearSearch}
+              aria-label="clear-search-button"
+            >
+              Clear Search
+            </button>
+          )}
+          <span className="search-results">
+            {matchingAreaIds.length > 0 && `Found ${matchingAreaIds.length} matching areas`}
+          </span>
+        </div>
+        
         <button 
           onClick={handleClearMyPins}
           aria-label="clear-pins-button"
@@ -162,6 +249,24 @@ export default function Mapbox() {
         {overlay && (
           <Source id="geo_data" type="geojson" data={overlay}>
             <Layer {...geoLayer} />
+            {matchingAreaIds.length > 0 && (
+              <Layer 
+                id="highlighted-areas"
+                type="fill"
+                paint={{
+                  'fill-color': '#FF0000', 
+                  'fill-opacity': 0.7
+                }}
+                filter={[
+                  "match",
+                  ["to-string", ["get", "area_id"]],
+                  matchingAreaIds,
+                  true,
+                  false
+                ]}
+              />
+            )}
+
           </Source>
         )}
         

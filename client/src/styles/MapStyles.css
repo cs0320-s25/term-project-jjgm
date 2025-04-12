@@ -15,31 +15,71 @@
     border-radius: 4px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   }
-  
-  .clear-pins-button {
-    background-color: #ff5252;
-    color: white;
-    border: none;
-    padding: 8px 16px;
+
+  .search-controls {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+
+  .search-controls input {
+    padding: 8px;
+    flex-grow: 1;
+    min-width: 200px;
+    border: 1px solid #ccc;
     border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
   }
-  
-  .clear-pins-button:hover {
-    background-color: #ff0000;
-  }
-  
-  .map-pin {
-    font-size: 24px;
-    cursor: pointer;
-    z-index: 10;
-  }
-  
-  .map-pin.my-pin {
-    color: #ff0000; /* red color for your own pins */
-  }
-  
-  .map-pin.other-pin {
-    color: #0000ff; /* blue color for other user pins */
-  }
+
+
+.search-controls button {
+  padding: 8px 12px;
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.search-controls button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.search-controls button:hover:not(:disabled) {
+  background-color: #3367d6;
+}
+
+.search-results {
+  font-size: 14px;
+  color: #666;
+}
+
+.clear-pins-button {
+  background-color: #ff5252;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.clear-pins-button:hover {
+  background-color: #ff0000;
+}
+
+.map-pin {
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.map-pin.my-pin {
+  color: #ff0000; /* red color for your own pins */
+}
+
+.map-pin.other-pin {
+  color: #0000ff; /* blue color for other user pins */
+}
