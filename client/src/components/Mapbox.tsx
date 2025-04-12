@@ -7,7 +7,7 @@ import Map, {
   Source,
   ViewStateChangeEvent,
 } from "react-map-gl";
-import { geoLayer } from "../utils/overlay";
+import { geoLayer, overlayData } from "../utils/overlay";
 import { useUser } from "@clerk/clerk-react";
 import { addPin, listPins, clearUserPins, searchAreas } from "../utils/api";
 
@@ -59,6 +59,7 @@ export default function Mapbox() {
   const { user } = useUser();
 
   useEffect(() => {
+    setOverlay(overlayData());
     refreshPins();
     
     // periodically refresh pins
@@ -67,34 +68,34 @@ export default function Mapbox() {
     return () => clearInterval(interval);
   }, []);
 
-const fetchOverlay = async () => {
+  const fetchOverlay = async () => {
 
-  if (!minLat || !maxLat || !minLon || !maxLon) {
-    setOverlay(undefined);
-    return;
-  }
-
-  const params = new URLSearchParams({
-    minLat: minLat,
-    maxLat: maxLat,
-    minLon: minLon,
-    maxLon: maxLon,
-  });
-  try {
-    const response = await fetch(
-      `http://localhost:3232/redlining?${params.toString()}`
-    );
-    if (!response.ok) {
-      console.error("Error fetching redlining overlay:", response.statusText);
+    if (!minLat || !maxLat || !minLon || !maxLon) {
+      setOverlay(undefined);
       return;
     }
-    const data = await response.json();
-    console.log("Fetched redlining overlay:", data);
-    setOverlay(data);
-  } catch (error) {
-    console.error("Error in fetchOverlay:", error);
-  }
-};
+
+    const params = new URLSearchParams({
+      minLat: minLat,
+      maxLat: maxLat,
+      minLon: minLon,
+      maxLon: maxLon,
+    });
+    try {
+      const response = await fetch(
+        `http://localhost:3232/redlining?${params.toString()}`
+      );
+      if (!response.ok) {
+        console.error("Error fetching redlining overlay:", response.statusText);
+        return;
+      }
+      const data = await response.json();
+      console.log("Fetched redlining overlay:", data);
+      setOverlay(data);
+    } catch (error) {
+      console.error("Error in fetchOverlay:", error);
+    }
+  };
 
 
   const refreshPins = () => {
