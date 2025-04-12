@@ -33,6 +33,7 @@
   .map-pin {
     font-size: 24px;
     cursor: pointer;
+    z-index: 10;
   }
   
   .map-pin.my-pin {

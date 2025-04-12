@@ -9,6 +9,7 @@ import Map, {
 } from "react-map-gl";
 import { geoLayer, overlayData } from "../utils/overlay";
 import { useUser } from "@clerk/clerk-react";
+import { addPin, listPins, clearUserPins } from "../utils/api";
 
 const MAPBOX_API_KEY = process.env.MAPBOX_TOKEN;
 if (!MAPBOX_API_KEY) {
@@ -27,62 +28,7 @@ export interface PinData {
   timestamp: number;
 }
 
-
-// mock pin data store to simulate firebase
-// obviously replace with real firebase implementation in 5.2
-class PinDataStore {
-  private static instance: PinDataStore;
-  private pins: PinData[] = [];
-
-  private constructor() {
-    // attempt to load pins from localStorage for persistence between page reloads
-    const savedPins = localStorage.getItem("mapPins");
-    if (savedPins) {
-      try {
-        this.pins = JSON.parse(savedPins);
-      } catch (e) {
-        console.error("(!) failed to parse saved pins", e);
-        this.pins = [];
-      }
-    }
-  }
-
-  public static getInstance(): PinDataStore {
-    if (!PinDataStore.instance) {
-      PinDataStore.instance = new PinDataStore();
-    }
-    return PinDataStore.instance;
-  }
-
-  public getAllPins(): PinData[] {
-    return [...this.pins];
-  }
-
-  public addPin(pin: PinData): void {
-    this.pins.push(pin);
-    this.savePins();
-  }
-
-  public clearUserPins(userId: string): void {
-    this.pins = this.pins.filter((pin) => pin.userId !== userId);
-    this.savePins();
-  }
-
-  private savePins(): void {
-    // save pins to localStorage for persistence
-    localStorage.setItem("mapPins", JSON.stringify(this.pins));
-  }
-}
-
-
-
-// TODO: MAPS PART 1:
-// - fill out starting map state and add to viewState
-//
-// const ProvidenceLatLong: LatLong = {
-//   ...
-// };
-// const initialZoom = ...
+// providence coordinates and zoom level
 const ProvidenceLatLong: LatLong = {
   lat: 41.825,
   long: -71.418,
@@ -101,16 +47,12 @@ export default function Mapbox() {
     zoom: initialZoom,
   });
 
-  // TODO: MAPS PART 5:
-  // - add the overlay useState
-  // - implement the useEffect to fetch the overlay data
- const [overlay, setOverlay] = useState<GeoJSON.FeatureCollection | undefined>(
-   undefined
- );
+  const [overlay, setOverlay] = useState<GeoJSON.FeatureCollection | undefined>(
+    undefined
+  );
 
- const [pins, setPins] = useState<PinData[]>([]);
+  const [pins, setPins] = useState<PinData[]>([]);
   const { user } = useUser();
-  const pinStore = PinDataStore.getInstance();
 
   useEffect(() => {
     setOverlay(overlayData());
@@ -124,7 +66,36 @@ export default function Mapbox() {
   }, []);
 
   const refreshPins = () => {
-    setPins(pinStore.getAllPins());
+    listPins()
+      .then((data) => {
+        console.log("API response:", data);
+        
+        if (data && data.response_type === "success" && Array.isArray(data.pins)) {
+          // convert the pins from the API to the PinData format
+          const convertedPins: PinData[] = data.pins.map((pin: any) => {
+            console.log("Processing pin:", pin);
+            return {
+              id: pin.id || `pin-${Date.now()}`,
+              location: {
+                lat: Number(pin.lat),
+                long: Number(pin.lng)
+              },
+              userId: pin.userId || "unknown",
+              timestamp: Number(pin.timestamp) || Date.now()
+            };
+          });
+          
+          console.log("Converted pins for display:", convertedPins);
+          setPins(convertedPins);
+        } else {
+          console.log("No pins found or invalid response format:", data);
+          setPins([]);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching pins:", error);
+        setPins([]);
+      });
   };
 
   const handleMapClick = (e: MapLayerMouseEvent) => {
@@ -140,22 +111,33 @@ export default function Mapbox() {
       timestamp: Date.now(),
     };
     
-    pinStore.addPin(newPin);
-    refreshPins();
+    // add the pin to the API
+    addPin(
+      user.id,
+      newPin.id,
+      newPin.location.lat,
+      newPin.location.long,
+      newPin.timestamp
+    )
+      .then(() => {
+        refreshPins();
+      })
+      .catch((error) => {
+        console.error("Error adding pin:", error);
+      });
   };
 
   const handleClearMyPins = () => {
     if (!user) return;
     
-    pinStore.clearUserPins(user.id);
-    refreshPins();
+    clearUserPins(user.id)
+      .then(() => {
+        refreshPins();
+      })
+      .catch((error) => {
+        console.error("Error clearing pins:", error);
+      });
   };
-
-
-
-  useEffect(() => {
-    setOverlay(overlayData());
-  }, []);
 
   return (
     <div className="map-container">

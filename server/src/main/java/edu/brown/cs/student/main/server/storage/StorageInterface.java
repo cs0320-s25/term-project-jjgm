@@ -12,4 +12,10 @@ public interface StorageInterface {
       throws InterruptedException, ExecutionException;
 
   void clearUser(String uid) throws InterruptedException, ExecutionException;
+
+  void addPin(String uid, String pinId, Map<String, Object> pinData);
+
+  List<Map<String, Object>> getAllPins() throws InterruptedException, ExecutionException;
+
+  void clearUserPins(String uid) throws InterruptedException, ExecutionException;
 }

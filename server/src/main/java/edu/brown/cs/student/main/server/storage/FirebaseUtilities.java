@@ -139,4 +139,60 @@ public class FirebaseUtilities implements StorageInterface {
       System.err.println("Error deleting collection : " + e.getMessage());
     }
   }
+
+  // -- User Story 3 5.2 Methods --\\
+  @Override
+  public void addPin(String uid, String pinId, Map<String, Object> pinData) {
+    if (uid == null || pinId == null || pinData == null) {
+      throw new IllegalArgumentException("addPin: uid, pinId, or pinData cannot be null");
+    }
+
+    System.out.println("Storing pin with ID: " + pinId + " for user: " + uid);
+
+    Firestore db = FirestoreClient.getFirestore();
+    // Store pins at top level collection instead of nested
+    db.collection("pins").document(pinId).set(pinData);
+  }
+
+  @Override
+  public List<Map<String, Object>> getAllPins() throws InterruptedException, ExecutionException {
+
+    Firestore db = FirestoreClient.getFirestore();
+    List<Map<String, Object>> allPins = new ArrayList<>();
+
+    // Get pins from top-level collection
+    CollectionReference pinsRef = db.collection("pins");
+    QuerySnapshot pinsQuery = pinsRef.get().get();
+
+    System.out.println("Found " + pinsQuery.size() + " pins total");
+
+    for (QueryDocumentSnapshot pinDoc : pinsQuery.getDocuments()) {
+      Map<String, Object> pinData = pinDoc.getData();
+      // Ensure ID is included
+      if (!pinData.containsKey("id")) {
+        pinData.put("id", pinDoc.getId());
+      }
+      allPins.add(pinData);
+    }
+
+    return allPins;
+  }
+
+  @Override
+  public void clearUserPins(String uid) throws InterruptedException, ExecutionException {
+
+    if (uid == null) {
+      throw new IllegalArgumentException("clearUserPins: uid cannot be null");
+    }
+
+    Firestore db = FirestoreClient.getFirestore();
+    // Query pins with matching userId from top-level collection
+    QuerySnapshot pinsQuery = db.collection("pins").whereEqualTo("userId", uid).get().get();
+
+    System.out.println("Clearing " + pinsQuery.size() + " pins for user: " + uid);
+
+    for (QueryDocumentSnapshot doc : pinsQuery.getDocuments()) {
+      doc.getReference().delete();
+    }
+  }
 }

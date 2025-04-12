@@ -2,8 +2,11 @@ package edu.brown.cs.student.main.server;
 
 import static spark.Spark.after;
 
+import edu.brown.cs.student.main.server.handlers.AddPinHandler;
 import edu.brown.cs.student.main.server.handlers.AddWordHandler;
+import edu.brown.cs.student.main.server.handlers.ClearPinsHandler;
 import edu.brown.cs.student.main.server.handlers.ClearUserHandler;
+import edu.brown.cs.student.main.server.handlers.ListPinsHandler;
 import edu.brown.cs.student.main.server.handlers.ListWordsHandler;
 import edu.brown.cs.student.main.server.storage.FirebaseUtilities;
 import edu.brown.cs.student.main.server.storage.StorageInterface;
@@ -28,6 +31,10 @@ public class Server {
     StorageInterface firebaseUtils;
     try {
       firebaseUtils = new FirebaseUtilities();
+
+      Spark.get("add-pin", new AddPinHandler(firebaseUtils));
+      Spark.get("list-pins", new ListPinsHandler(firebaseUtils));
+      Spark.get("clear-pins", new ClearPinsHandler(firebaseUtils));
 
       Spark.get("add-word", new AddWordHandler(firebaseUtils));
       Spark.get("list-words", new ListWordsHandler(firebaseUtils));
