@@ -18,5 +18,8 @@ test-results/
 playwright-report/
 playwright/.cache/
 
+# firebase creds
+server/src/main/resources/
+
 # mac
 .DS_Store
