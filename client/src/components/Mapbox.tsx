@@ -28,7 +28,6 @@ export interface PinData {
   timestamp: number;
 }
 
-// Providence coordinates and zoom level
 const ProvidenceLatLong: LatLong = {
   lat: 41.82,
   long: -71.41,
@@ -104,7 +103,7 @@ export default function Mapbox() {
         console.log("API response:", data);
         
         if (data && data.response_type === "success" && Array.isArray(data.pins)) {
-          // Convert the pins from the API to the PinData format
+          // -- convert pins from the API to the PinData format
           const convertedPins: PinData[] = data.pins.map((pin: any) => {
             return {
               id: pin.id || `pin-${Date.now()}`,
@@ -233,69 +232,7 @@ export default function Mapbox() {
 
   return (
     <div className="map-container">
-      <div className = "latlong">
-        <input
-          type="text"
-          value={minLat}
-          onChange={(e) => setMinLat(e.target.value)}
-          placeholder="Min Latitude"
-          style={{ marginRight: "5px" }}
-        />
-        <input
-          type="text"
-          value={maxLat}
-          onChange={(e) => setMaxLat(e.target.value)}
-          placeholder="Max Latitude"
-          style={{ marginRight: "5px" }}
-        />
-        <input
-          type="text"
-          value={minLon}
-          onChange={(e) => setMinLon(e.target.value)}
-          placeholder="Min Longitude"
-          style={{ marginRight: "5px" }}
-        />
-        <input
-          type="text"
-          value={maxLon}
-          onChange={(e) => setMaxLon(e.target.value)}
-          placeholder="Max Longitude"
-          style={{ marginRight: "5px" }}
-        />
-        <button onClick={fetchOverlay}>Update Overlay</button>
-      </div>
       <div className="map-controls">
-        <div className="search-controls">
-          <input
-            type="text"
-            placeholder="Search for areas by keyword..."
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-            disabled={isSearching}
-            aria-label="area-search"
-          />
-          <button
-            onClick={handleSearch}
-            disabled={isSearching || !searchKeyword}
-            aria-label="search-button"
-          >
-            {isSearching ? "Searching..." : "Search"}
-          </button>
-          {matchingAreaIds.length > 0 && (
-            <button
-              onClick={handleClearSearch}
-              aria-label="clear-search-button"
-            >
-              Clear Search
-            </button>
-          )}
-          <span className="search-results">
-            {matchingAreaIds.length > 0 &&
-              `Found ${matchingAreaIds.length} matching areas`}
-          </span>
-        </div>
-
         <button
           onClick={handleClearMyPins}
           aria-label="clear-pins-button"
@@ -304,7 +241,7 @@ export default function Mapbox() {
           Clear My Pins
         </button>
       </div>
-
+  
       <Map
         mapboxAccessToken={MAPBOX_API_KEY}
         {...viewState}
@@ -335,7 +272,7 @@ export default function Mapbox() {
             )}
           </Source>
         )}
-
+  
         {pins.map((pin) => (
           <Marker
             key={pin.id}

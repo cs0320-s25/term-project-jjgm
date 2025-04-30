@@ -1,45 +1,51 @@
 .map-container {
-    position: relative;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  
-  .map-controls {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1;
-    background-color: white;
-    padding: 8px;
-    border-radius: 4px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  }
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
 
-  .search-controls {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 5px;
-  }
+.map-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+}
 
-  .search-controls input {
-    padding: 8px;
-    flex-grow: 1;
-    min-width: 200px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
+.search-controls {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
 
+.search-controls input {
+  padding: 10px 15px;
+  flex-grow: 1;
+  min-width: 200px;
+  border: 1px solid #ddd;
+  border-radius: 25px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
 
 .search-controls button {
-  padding: 8px 12px;
-  background-color: #4285f4;
+  padding: 10px 20px;
+  background-color: #1e3c72;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 25px;
   cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .search-controls button:disabled {
@@ -48,7 +54,9 @@
 }
 
 .search-controls button:hover:not(:disabled) {
-  background-color: #3367d6;
+  background-color: #2a5298;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }
 
 .search-results {
@@ -57,31 +65,40 @@
 }
 
 .clear-pins-button {
-  background-color: #ff5252;
+  background-color: #1e3c72;
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 10px 20px;
+  border-radius: 25px;
   cursor: pointer;
   font-weight: bold;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .clear-pins-button:hover {
-  background-color: #ff0000;
+  background-color: #2a5298;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }
 
 .map-pin {
-  font-size: 24px;
+  font-size: 28px;
   cursor: pointer;
   z-index: 10;
+  transition: transform 0.2s ease;
+}
+
+.map-pin:hover {
+  transform: scale(1.2);
 }
 
 .map-pin.my-pin {
-  color: #ff0000; /* red color for your own pins */
+  color: #ff3b30;
 }
 
 .map-pin.other-pin {
-  color: #0000ff; /* blue color for other user pins */
+  color: #007aff;
 }
 
 .latlong {
@@ -89,4 +106,126 @@
   padding: 10px;
   background-color: #f0f0f0;
   text-align: left;
+}
+
+.beatmap-container {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  min-height: calc(100vh - 60px);
+  padding: 20px;
+}
+
+.beatmap-title {
+  font-size: 3rem;
+  margin: 20px 0;
+  color: white;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+.beatmap-nav {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0 30px;
+  gap: 20px;
+}
+
+.beatmap-nav button {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #1e3c72;
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  font-weight: bold;
+}
+
+.beatmap-nav button:hover {
+  background-color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.beatmap-nav button.active {
+  background-color: white;
+  transform: scale(1.05);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.songs-game {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 40px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  margin: 0 auto;
+  max-width: 800px;
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+.songs-game h2 {
+  font-size: 2.2rem;
+  margin-bottom: 25px;
+  color: #1e3c72;
+  font-weight: 700;
+}
+
+.songs-game label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  color: #555;
+}
+
+.songs-game input {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px 20px;
+  border-radius: 30px;
+  border: 1px solid #ccc;
+  margin-bottom: 25px;
+  font-size: 1rem;
+  text-align: center;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.songs-game button {
+  background-color: #1e3c72;
+  color: white;
+  padding: 12px 25px;
+  font-size: 1rem;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  margin: 0 10px 20px 10px;
+}
+
+.songs-game button:hover {
+  background-color: #2a5298;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.songs-game p {
+  margin-top: 25px;
+  font-size: 1.1rem;
+  color: #666;
+  font-style: italic;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

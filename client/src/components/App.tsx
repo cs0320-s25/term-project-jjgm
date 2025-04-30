@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import "../styles/App.css";
-import MapsGearup from "./MapsGearup";
+import MapsGearup from "./BeatmapSections";
 import {
   SignedIn,
   SignedOut,
@@ -28,7 +28,20 @@ function App() {
   return (
     <div className="App">
       <SignedOut>
-        <SignInButton />
+        <div className="landing-page">
+          <div className="landing-content">
+            <h1 className="app-title">BeatMap</h1>
+            <p className="app-description">
+              Make your mark on the BeatMap
+            </p>
+            <div className="sign-in-container">
+              <SignInButton mode="modal" className="sign-in-button" />
+            </div>
+            <div className="landing-footer">
+              <p>Play • Listen • Win</p>
+            </div>
+          </div>
+        </div>
       </SignedOut>
       <SignedIn>
         <div
