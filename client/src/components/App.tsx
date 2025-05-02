@@ -1,13 +1,7 @@
 import { initializeApp } from "firebase/app";
 import "../styles/App.css";
 import MapsGearup from "./BeatmapSections";
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignOutButton,
-  UserButton,
-} from "@clerk/clerk-react";
+import {SignedIn,SignedOut,SignInButton,SignOutButton,UserButton,useUser} from "@clerk/clerk-react";
 
 // REMEMBER TO PUT YOUR API KEY IN A FOLDER THAT IS GITIGNORED!!
 // (for instance, /src/private/api_key.tsx)
@@ -29,20 +23,12 @@ function App() {
     <div className="App">
       <SignedOut>
         <div className="landing-page">
-          <div className="landing-content">
-            <h1 className="app-title">BeatMap</h1>
-            <p className="app-description">
-              Make your mark on the BeatMap
-            </p>
-            <div className="sign-in-container">
-              <SignInButton mode="modal" className="sign-in-button" />
-            </div>
-            <div className="landing-footer">
-              <p>Play • Listen • Win</p>
-            </div>
+          <div className="sign-in-wrapper">
+            <SignInButton mode="modal" />
           </div>
         </div>
       </SignedOut>
+
       <SignedIn>
         <div
           style={{
@@ -69,5 +55,6 @@ function App() {
     </div>
   );
 }
+
 
 export default App;
