@@ -8,16 +8,28 @@ enum Section {
   MAP_DEMO = "MAP_DEMO",
 }
 
-export default function MapsGearup() {
-  const [section, setSection] = useState<Section>(Section.SONGS_GAME);
+export default function BeatmapSelections() {
+  const [section, setSection] = useState<Section | null>(null);
+  const [genre, setGenre] = useState<string>("");
+
+  const genreOptions = ["Pop", "90s RnB", "Hip-Hop/Rap", "Afrobeats", "Country"];
+
+  // const handleGenreChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  //   setGenre(genre.toLowerCase());
+  //   setSection(Section.SONGS_GAME);
+  // };
+
+  const handleGenreChange = (g: string) => {
+    setGenre(g);
+    setSection(Section.SONGS_GAME);
+  };
+  
 
   return (
     <div className="beatmap-container">
       <h1 className="beatmap-title" aria-label="Gearup Title">BeatMap</h1>
       <div className="beatmap-nav">
         <button 
-          className={section === Section.SONGS_GAME ? "active" : ""} 
-          onClick={() => setSection(Section.SONGS_GAME)}
         >
           GUESS SONGS
         </button>
@@ -28,7 +40,22 @@ export default function MapsGearup() {
           BEATMAP
         </button>
       </div>
-      {section === Section.SONGS_GAME ? <SongsGame /> : null}
+
+      {/* Genre selection modal overlay */}
+      {section === null && (
+        <div className="genre-overlay">
+          <div className="genre-modal">
+            <h3>What genre would you like to play?</h3>
+            {genreOptions.map((g) => (
+              <button key={g} onClick={() => handleGenreChange(g)}>
+                {g.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {section === Section.SONGS_GAME ? <SongsGame genre={genre}/> : null}
       {section === Section.MAP_DEMO ? <Mapbox /> : null}
     </div>
   );
