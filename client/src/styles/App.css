@@ -20,7 +20,7 @@
   background-image: url("/Images/BeatMapImg.png");
   background-repeat: no-repeat;
   background-position: center;
-  background-size: contain; /* 👈 this shows the full image */
+  background-size: contain; 
   min-height: 100vh;
   display: flex;
   flex-direction: column;

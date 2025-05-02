@@ -1,13 +1,7 @@
 import { initializeApp } from "firebase/app";
 import "../styles/App.css";
 import MapsGearup from "./BeatmapSections";
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignOutButton,
-  UserButton,
-} from "@clerk/clerk-react";
+import {SignedIn,SignedOut,SignInButton,SignOutButton,UserButton,useUser} from "@clerk/clerk-react";
 
 // REMEMBER TO PUT YOUR API KEY IN A FOLDER THAT IS GITIGNORED!!
 // (for instance, /src/private/api_key.tsx)

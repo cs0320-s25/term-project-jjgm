@@ -66,3 +66,11 @@ export async function clearUser(uid: string) {
     uid: uid,
   });
 }
+
+export async function saveUserProfile(uid: string, profile: { nickname: string; dorm: string }) {
+  return await queryAPI("save-profile", {
+    uid: uid,
+    nickname: profile.nickname,
+    dorm: profile.dorm,
+  });
+}
