@@ -16,6 +16,8 @@ import edu.brown.cs.student.main.server.handlers.ListWordsHandler;
 import edu.brown.cs.student.main.server.handlers.RedLiningHandler;
 import edu.brown.cs.student.main.server.handlers.SaveProfileHandler;
 import edu.brown.cs.student.main.server.handlers.SearchAreasHandler;
+import edu.brown.cs.student.main.server.handlers.leaderboardDormHandler;
+import edu.brown.cs.student.main.server.handlers.leaderboardGlobalHandler;
 import edu.brown.cs.student.main.server.parser.GeoJsonObject;
 import edu.brown.cs.student.main.server.parser.JSONParser2;
 import edu.brown.cs.student.main.server.storage.FirebaseUtilities;
@@ -53,6 +55,10 @@ public class Server {
 
       Spark.post("get-profile", new GetProfileHandler(firebaseUtils));
       Spark.post("save-profile", new SaveProfileHandler(firebaseUtils));
+
+      Spark.get("leaderboard/global", new leaderboardGlobalHandler(firebaseUtils));
+      Spark.get("leaderboard/dorm/:dormId", new leaderboardDormHandler(firebaseUtils));
+
       Spark.get("add-pin", new AddPinHandler(firebaseUtils));
       Spark.get("list-pins", new ListPinsHandler(firebaseUtils));
       Spark.get("clear-pins", new ClearPinsHandler(firebaseUtils));

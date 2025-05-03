@@ -12,6 +12,7 @@ import {
 import { useEffect, useState } from "react";
 import TermsAndProfile from "./TermsAndProfile";
 import { getUserProfile } from "../utils/api";
+import leaderboard from '.Leaderboard';
 
 // Firebase config
 const firebaseConfig = {

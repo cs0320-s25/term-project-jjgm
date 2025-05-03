@@ -5,6 +5,8 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Query;
+import com.google.cloud.firestore.Query.Direction;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.google.firebase.FirebaseApp;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -196,5 +199,58 @@ public class FirebaseUtilities implements StorageInterface {
     for (QueryDocumentSnapshot doc : pinsQuery.getDocuments()) {
       doc.getReference().delete();
     }
+  }
+
+  @Override
+  public List<Map<String, Object>> getGlobalLeaderboard(int limit)
+      throws InterruptedException, ExecutionException {
+
+    Firestore db = FirestoreClient.getFirestore();
+
+    QuerySnapshot snapshot =
+        db.collection("users")
+            .orderBy("cumulativePoints", Query.Direction.DESCENDING)
+            .limit(limit)
+            .get()
+            .get();
+
+    List<Map<String, Object>> leaderboard = new ArrayList<>();
+    int rank = 1;
+
+    for (QueryDocumentSnapshot doc : snapshot.getDocuments()) {
+      Map<String, Object> entry = new HashMap<>();
+      entry.put("rank", rank++);
+      entry.put("nickname", doc.getData().get("nickname"));
+      entry.put("dorm", doc.getString("dorm"));
+      entry.put("score", doc.getLong("cumulativePoints"));
+      leaderboard.add(entry);
+    }
+    return leaderboard;
+  }
+
+  @Override
+  public List<Map<String, Object>> getDormLeaderboard(String dormId, int limit)
+      throws InterruptedException, ExecutionException {
+
+    Firestore db = FirestoreClient.getFirestore();
+
+    QuerySnapshot snapshot =
+        db.collection("users")
+            .whereEqualTo("dorm", dormId)
+            .orderBy("cumulativePoints", Direction.DESCENDING)
+            .limit(limit)
+            .get()
+            .get();
+    List<Map<String, Object>> leaderboard = new ArrayList<>();
+    int rank = 1;
+    for (QueryDocumentSnapshot doc : snapshot.getDocuments()) {
+      Map<String, Object> entry = new HashMap<>();
+      entry.put("rank", rank++);
+      entry.put("nickname", doc.getData().get("nickname"));
+      entry.put("dorm", doc.getString("dorm"));
+      entry.put("score", doc.getLong("cumulativePoints"));
+      leaderboard.add(entry);
+    }
+    return leaderboard;
   }
 }

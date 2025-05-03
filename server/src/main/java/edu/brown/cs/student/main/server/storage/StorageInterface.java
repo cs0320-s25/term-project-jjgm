@@ -18,4 +18,14 @@ public interface StorageInterface {
   List<Map<String, Object>> getAllPins() throws InterruptedException, ExecutionException;
 
   void clearUserPins(String uid) throws InterruptedException, ExecutionException;
+
+  /** returns list of leaderboard entries (rank, nickname, dorm, score) for all users. */
+  List<Map<String, Object>> getGlobalLeaderboard(int limit)
+      throws InterruptedException, ExecutionException;
+
+  /**
+   * returns list of leaderboard entries (rank, nickname, dorm, score) for users in a specific dorm.
+   */
+  List<Map<String, Object>> getDormLeaderboard(String dormId, int limit)
+      throws InterruptedException, ExecutionException;
 }
