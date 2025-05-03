@@ -67,18 +67,69 @@ export async function clearUser(uid: string) {
   });
 }
 
-export async function saveUserProfile(uid: string, profile: { nickname: string; dorm: string }) {
-  return await queryAPI("save-profile", {
-    uid: uid,
-    nickname: profile.nickname,
-    dorm: profile.dorm,
+// export async function saveUserProfile(uid: string, profile: { nickname: string; dorm: string }) {
+//   return await queryAPI("save-profile", {
+//     uid: uid,
+//     nickname: profile.nickname,
+//     dorm: profile.dorm,
+//   });
+// }
+
+
+
+// export async function getUserProfile(uid: string) {
+//   const result = await queryAPI("get-profile", {
+//     uid,
+//   });
+//   if (result.response_type === "success") {
+//     return result.profile;
+//   }
+//   return null;
+// }
+
+
+export async function saveUserProfile(
+  uid: string,
+  profile: { nickname: string; dorm: string }
+) {
+  const response = await fetch(`${HOST}/save-profile`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      userId: uid,
+      nickname: profile.nickname,
+      dorm: profile.dorm,
+    }),
   });
+
+  if (!response.ok) {
+    throw new Error(`Failed to save profile: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  if (data.response_type !== "success") {
+    throw new Error(`Error: ${data.error}`);
+  }
+
+  return data.profile;
 }
 
 export async function getUserProfile(uid: string) {
-  const result = await queryAPI("get-profile", {
-    uid: uid,
+  const response = await fetch(`${HOST}/get-profile`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ userId: uid }),
   });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get profile: ${response.statusText}`);
+  }
+
+  const result = await response.json();
   if (result.response_type === "success") {
     return result.profile;
   }

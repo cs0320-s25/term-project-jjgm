@@ -1,12 +1,19 @@
 import { initializeApp } from "firebase/app";
 import "../styles/App.css";
 import MapsGearup from "./BeatmapSections";
-import {SignedIn,SignedOut,SignInButton,SignOutButton,UserButton,useUser} from "@clerk/clerk-react";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignOutButton,
+  UserButton,
+  useUser,
+} from "@clerk/clerk-react";
+import { useEffect, useState } from "react";
+import TermsAndProfile from "./TermsAndProfile";
+import { getUserProfile } from "../utils/api";
 
-// REMEMBER TO PUT YOUR API KEY IN A FOLDER THAT IS GITIGNORED!!
-// (for instance, /src/private/api_key.tsx)
-// import {API_KEY} from "./private/api_key"
-
+// Firebase config
 const firebaseConfig = {
   apiKey: process.env.API_KEY,
   authDomain: process.env.AUTH_DOMAIN,
@@ -19,8 +26,45 @@ const firebaseConfig = {
 initializeApp(firebaseConfig);
 
 function App() {
+  const { user } = useUser();
+  const [hasProfile, setHasProfile] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+ useEffect(() => {
+   const fetchUserProfile = async () => {
+  if (!user) return;
+
+  try {
+    const profile = await getUserProfile(user.id);
+    console.log("Fetched profile:", profile); // 👈 DEBUG
+
+    // Check both existence and non-empty values
+    if (
+      profile &&
+      typeof profile.nickname === "string" &&
+      profile.nickname.trim() !== "" &&
+      typeof profile.dorm === "string" &&
+      profile.dorm.trim() !== ""
+    ) {
+      setHasProfile(true);
+    } else {
+      setHasProfile(false);
+    }
+  } catch (error) {
+    console.error("Failed to fetch profile:", error);
+    setHasProfile(false);
+  } finally {
+    setProfileLoaded(true);
+  }
+};
+    fetchUserProfile();
+  }
+  , [user]);
+
+
   return (
     <div className="App">
+      {/* Show background landing page with sign in button before anything else */}
       <SignedOut>
         <div className="landing-page">
           <div className="sign-in-wrapper">
@@ -30,31 +74,35 @@ function App() {
       </SignedOut>
 
       <SignedIn>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "center",
-              alignContent: "center",
-              padding: "10px",
-              gap: "10px",
-            }}
-          >
-            <SignOutButton />
-            <UserButton />
+        {!profileLoaded ? (
+          // Wait for profile check
+          <div className="landing-page" />
+        ) : !hasProfile ? (
+          // Show terms and profile creation if not yet completed
+          <TermsAndProfile onComplete={() => setHasProfile(true)} />
+        ) : (
+          // Show main app
+          <div className="main-page">
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "center",
+                alignContent: "center",
+                padding: "10px",
+                gap: "10px",
+              }}
+            >
+              <SignOutButton />
+              <UserButton />
+            </div>
+            <MapsGearup />
           </div>
-          <MapsGearup />
-        </div>
+        )}
+        <SignOutButton/>
       </SignedIn>
     </div>
   );
 }
-
 
 export default App;

@@ -1,5 +1,7 @@
 package edu.brown.cs.student.main.server.handlers;
-import edu.brown.cs.student.main.server.Utils;
+
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 import edu.brown.cs.student.main.server.storage.StorageInterface;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,47 +11,48 @@ import spark.Route;
 
 public class SaveProfileHandler implements Route {
 
-  public StorageInterface storageHandler;
+  private final StorageInterface storageHandler;
 
   public SaveProfileHandler(StorageInterface storageHandler) {
     this.storageHandler = storageHandler;
   }
 
+  public static class ProfileInput {
+    public String userId;
+    public String nickname;
+    public String dorm;
+  }
+
   @Override
   public Object handle(Request request, Response response) {
     Map<String, Object> responseMap = new HashMap<>();
-    try {
-      // collect parameters from the request
-      String userId = request.queryParams("userId");
-      String nickName = request.queryParams("nickName");
-      String dorm = request.queryParams("dorm");
 
-      if (userId == null || nickName == null || dorm == null|| userId.isEmpty() || nickName.isEmpty()
-          || dorm.isEmpty()) {
-        respomseMap.put("response_type", "failure");
-        responseMap.put("error", "Missing required parameters");
+    try {
+      Moshi moshi = new Moshi.Builder().build();
+      JsonAdapter<ProfileInput> adapter = moshi.adapter(ProfileInput.class);
+      ProfileInput input = adapter.fromJson(request.body());
+
+      if (input == null || input.userId == null || input.nickname == null || input.dorm == null) {
+        responseMap.put("response_type", "failure");
+        responseMap.put("error", "Missing required fields.");
         return Utils.toMoshiJson(responseMap);
       }
 
-      Map<String, Object> userData = new HashMap<>();
-      userData.put("nickName", nickName);
-      userData.put("dorm", dorm);
+      Map<String, Object> profile = new HashMap<>();
+      profile.put("nickname", input.nickname);
+      profile.put("dorm", input.dorm);
 
-
-      System.out.println("saving profile for user: " + userId);
-
-      // Use the interface method 
-      this.storageHandler.addDocument(userId,"profile", userId, userData);
+      storageHandler.addDocument(input.userId, "profile", input.userId, profile);
 
       responseMap.put("response_type", "success");
-      responseMap.put( "profile", userData);
+      responseMap.put("profile", profile);
+      return Utils.toMoshiJson(responseMap);
+
     } catch (Exception e) {
-      // error occurred in the storage handler
-      System.err.println("Error in SaveProfileHandler:");
       e.printStackTrace();
       responseMap.put("response_type", "failure");
       responseMap.put("error", e.getMessage());
+      return Utils.toMoshiJson(responseMap);
     }
-
-    return Utils.toMoshiJson(responseMap);
   }
+}

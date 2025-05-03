@@ -1,6 +1,7 @@
 package edu.brown.cs.student.main.server;
 
-import static spark.Spark.after;
+import static spark.Spark.before;
+import static spark.Spark.options;
 
 import edu.brown.cs.student.main.server.datasource.DefaultDataSource;
 import edu.brown.cs.student.main.server.datasource.GeoDataSource;
@@ -9,9 +10,11 @@ import edu.brown.cs.student.main.server.handlers.AddPinHandler;
 import edu.brown.cs.student.main.server.handlers.AddWordHandler;
 import edu.brown.cs.student.main.server.handlers.ClearPinsHandler;
 import edu.brown.cs.student.main.server.handlers.ClearUserHandler;
+import edu.brown.cs.student.main.server.handlers.GetProfileHandler;
 import edu.brown.cs.student.main.server.handlers.ListPinsHandler;
 import edu.brown.cs.student.main.server.handlers.ListWordsHandler;
 import edu.brown.cs.student.main.server.handlers.RedLiningHandler;
+import edu.brown.cs.student.main.server.handlers.SaveProfileHandler;
 import edu.brown.cs.student.main.server.handlers.SearchAreasHandler;
 import edu.brown.cs.student.main.server.parser.GeoJsonObject;
 import edu.brown.cs.student.main.server.parser.JSONParser2;
@@ -19,7 +22,6 @@ import edu.brown.cs.student.main.server.storage.FirebaseUtilities;
 import edu.brown.cs.student.main.server.storage.StorageInterface;
 import java.io.IOException;
 import java.nio.file.Paths;
-import spark.Filter;
 import spark.Spark;
 
 /** Top Level class for our project, utilizes spark to create and maintain our server. */
@@ -29,20 +31,28 @@ public class Server {
     int port = 3232;
     Spark.port(port);
 
-    after(
-        (Filter)
-            (request, response) -> {
-              response.header("Access-Control-Allow-Origin", "*");
-              response.header("Access-Control-Allow-Methods", "*");
-            });
+    // Apply CORS headers for all requests including preflight
+    before(
+        (request, response) -> {
+          response.header("Access-Control-Allow-Origin", "*");
+          response.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+          response.header(
+              "Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+        });
+
+    options(
+        "/*",
+        (request, response) -> {
+          response.status(200);
+          return "OK";
+        });
 
     StorageInterface firebaseUtils;
     try {
       firebaseUtils = new FirebaseUtilities();
 
-      Spark.get("save-profile", new SaveProfileHandler(firebaseUtils));
-      Spark.get("get-profile", new GetProfileHandler(firebaseUtils));
-
+      Spark.post("get-profile", new GetProfileHandler(firebaseUtils));
+      Spark.post("save-profile", new SaveProfileHandler(firebaseUtils));
       Spark.get("add-pin", new AddPinHandler(firebaseUtils));
       Spark.get("list-pins", new ListPinsHandler(firebaseUtils));
       Spark.get("clear-pins", new ClearPinsHandler(firebaseUtils));

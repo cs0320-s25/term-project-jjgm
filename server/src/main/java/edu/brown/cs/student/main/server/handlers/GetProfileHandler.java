@@ -1,52 +1,76 @@
 package edu.brown.cs.student.main.server.handlers;
-import edu.brown.cs.student.main.server.Utils;
+
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 import edu.brown.cs.student.main.server.storage.StorageInterface;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
-public class GetProfileHandler implements Route{
-  public StorageInterface storageHandler;
+public class GetProfileHandler implements Route {
+
+  private final StorageInterface storageHandler;
 
   public GetProfileHandler(StorageInterface storageHandler) {
     this.storageHandler = storageHandler;
   }
 
-  public Object handle(Request request, Response response){
-    Map<String, Object> responseMap = new HashMap<>();
-    try{
-      // collect parameters from the request
-      String userId = request.queryParams("userId");
+  public static class ProfileRequest {
+    public String userId;
+  }
 
-      if (userId == null || userId.isEmpty()) {
+  @Override
+  public Object handle(Request request, Response response) {
+    Map<String, Object> responseMap = new HashMap<>();
+
+    try {
+      Moshi moshi = new Moshi.Builder().build();
+      JsonAdapter<ProfileRequest> adapter = moshi.adapter(ProfileRequest.class);
+      ProfileRequest input = adapter.fromJson(request.body());
+
+      if (input == null || input.userId == null || input.userId.isEmpty()) {
         responseMap.put("response_type", "failure");
-        responseMap.put("error", "Missing userId parameter");
+        responseMap.put("error", "Missing userId");
         return Utils.toMoshiJson(responseMap);
       }
 
-      System.out.println("getting profile for user: " + userId);
+      List<Map<String, Object>> data = this.storageHandler.getCollection(input.userId, "profile");
 
-      // Use the interface method
-      List<Map<String, Object>> userData = this.storageHandler.getCollection(userId, "profile");
-
-      if (userData == null || userData.isEmpty()) {
+      if (data == null || data.isEmpty()) {
         responseMap.put("response_type", "failure");
         responseMap.put("error", "Profile not found");
-      }else {
-        responseMap.put("response_type", "success");
-        responseMap.put("profile", userData.get(0));
+      } else {
+        Map<String, Object> profile = data.get(0);
+
+        Object nicknameObj = profile.get("nickname");
+        Object dormObj = profile.get("dorm");
+
+        if (nicknameObj instanceof String && dormObj instanceof String) {
+          String nickname = ((String) nicknameObj).trim();
+          String dorm = ((String) dormObj).trim();
+
+          if (!nickname.isEmpty() && !dorm.isEmpty()) {
+            responseMap.put("response_type", "success");
+            responseMap.put("profile", profile);
+          } else {
+            responseMap.put("response_type", "failure");
+            responseMap.put("error", "Incomplete profile");
+          }
+        } else {
+          responseMap.put("response_type", "failure");
+          responseMap.put("error", "Malformed profile data");
+        }
       }
 
     } catch (Exception e) {
-      // error occurred in the storage handler
-      System.err.println("Error in GetProfileHandler:");
       e.printStackTrace();
       responseMap.put("response_type", "failure");
       responseMap.put("error", e.getMessage());
     }
-  }
-  return Utils.toMoshiJson(responseMap);
+
+    return Utils.toMoshiJson(responseMap);
   }
 }
