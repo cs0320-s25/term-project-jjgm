@@ -1,3 +1,5 @@
+package edu.brown.cs.student.main.server.handlers;
+import edu.brown.cs.student.main.server.Utils;
 import edu.brown.cs.student.main.server.storage.StorageInterface;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,14 +32,14 @@ public class SaveProfileHandler implements Route {
       }
 
       Map<String, Object> userData = new HashMap<>();
-      data.put("nickName", nickName);
-      data.put("dorm", dorm);
+      userData.put("nickName", nickName);
+      userData.put("dorm", dorm);
 
 
       System.out.println("saving profile for user: " + userId);
 
-      // Use the interface method (no casting needed now)
-      this.storageHandler.addDocument("users", userId, userData);
+      // Use the interface method 
+      this.storageHandler.addDocument(userId,"profile", userId, userData);
 
       responseMap.put("response_type", "success");
       responseMap.put( "profile", userData);
