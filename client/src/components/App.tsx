@@ -29,6 +29,8 @@ function App() {
   const { user } = useUser();
   const [hasProfile, setHasProfile] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [nickname, setNickname] = useState<string | null>(null);
+
 
  useEffect(() => {
    const fetchUserProfile = async () => {
@@ -36,7 +38,7 @@ function App() {
 
   try {
     const profile = await getUserProfile(user.id);
-    console.log("Fetched profile:", profile); // 👈 DEBUG
+    console.log("Fetched profile:", profile);
 
     // Check both existence and non-empty values
     if (
@@ -47,6 +49,7 @@ function App() {
       profile.dorm.trim() !== ""
     ) {
       setHasProfile(true);
+      setNickname(profile.nickname);
     } else {
       setHasProfile(false);
     }
@@ -83,6 +86,9 @@ function App() {
         ) : (
           // Show main app
           <div className="main-page">
+            <div className="nickname-banner">
+              {nickname ? `Welcome, ${nickname}!` : ""}
+            </div>
             <div
               style={{
                 display: "flex",
@@ -99,7 +105,7 @@ function App() {
             <MapsGearup />
           </div>
         )}
-        <SignOutButton/>
+        <SignOutButton />
       </SignedIn>
     </div>
   );

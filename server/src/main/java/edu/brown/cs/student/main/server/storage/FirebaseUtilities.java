@@ -180,15 +180,6 @@ public class FirebaseUtilities implements StorageInterface {
     return allPins;
   }
 
-  public void deleteDocument(String userId, String collectionName, String documentId) {
-    Firestore db = FirestoreClient.getFirestore(); // <-- Add this line
-    db.collection("users")
-        .document(userId)
-        .collection(collectionName)
-        .document(documentId)
-        .delete();
-  }
-
   @Override
   public void clearUserPins(String uid) throws InterruptedException, ExecutionException {
 
