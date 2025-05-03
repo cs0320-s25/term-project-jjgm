@@ -40,6 +40,9 @@ public class Server {
     try {
       firebaseUtils = new FirebaseUtilities();
 
+      Spark.get("save-profile", new SaveProfileHandler(firebaseUtils));
+      Spark.get("get-profile", new GetProfileHandler(firebaseUtils));
+
       Spark.get("add-pin", new AddPinHandler(firebaseUtils));
       Spark.get("list-pins", new ListPinsHandler(firebaseUtils));
       Spark.get("clear-pins", new ClearPinsHandler(firebaseUtils));

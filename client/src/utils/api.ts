@@ -74,3 +74,13 @@ export async function saveUserProfile(uid: string, profile: { nickname: string; 
     dorm: profile.dorm,
   });
 }
+
+export async function getUserProfile(uid: string) {
+  const result = await queryAPI("get-profile", {
+    uid: uid,
+  });
+  if (result.response_type === "success") {
+    return result.profile;
+  }
+  return null;
+}
