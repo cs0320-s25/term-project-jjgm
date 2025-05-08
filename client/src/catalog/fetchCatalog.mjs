@@ -27,7 +27,7 @@ async function fetchTracksFromPlaylist(playlistId, genre) {
       trackID: track.id,
       title: track.title,
       artist: track.artist.name,
-      preview_url: track.preview
+      // preview_url: track.preview
     }));
 }
 

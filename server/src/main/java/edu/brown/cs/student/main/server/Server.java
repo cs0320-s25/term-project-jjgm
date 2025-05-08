@@ -92,6 +92,34 @@ public class Server {
           "Error: Could not initialize Firebase. Likely due to firebase_config.json not being found. Exiting.");
       System.exit(1);
     }
+
+    Spark.get(
+        "/api/track/:trackId",
+        (request, response) -> {
+          String trackId = request.params(":trackId");
+          try {
+            java.net.URL url = new java.net.URL("https://api.deezer.com/track/" + trackId);
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+
+            java.io.BufferedReader reader =
+                new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
+            StringBuilder result = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+              result.append(line);
+            }
+            reader.close();
+
+            response.type("application/json");
+            System.out.println("Deezer response: " + result);
+            return result.toString();
+
+          } catch (Exception e) {
+            response.status(500);
+            return "{\"error\": \"Could not fetch preview from Deezer.\"}";
+          }
+        });
   }
 
   /**

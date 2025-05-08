@@ -21,13 +21,52 @@ export default function TermsAndProfile({
       await saveUserProfile(user.id, { nickname, dorm });
       console.log("Profile saved successfully");
       onComplete(); // Notify parent component that profile is saved
-     
     } catch (error) {
       console.error("Error saving profile:", error);
     } finally {
       setSaving(false);
     }
   };
+
+  // Combined Keeny and New Pem. Also using "slang" terms and not full names
+  const dormOptions = [
+    "Off-Campus",
+    "Andrews",
+    "Barbour",
+    "Buxton",
+    "Caswell",
+    "Chapman",
+    "Chen",
+    "Danoff",
+    "Dinman",
+    "Em-Wool",
+    "Goddard",
+    "Grad",
+    "Harambee",
+    "Harkness",
+    "Hegeman",
+    "Hope",
+    "Keeney",
+    "King",
+    "Littlefield",
+    "Machado",
+    "Marcy",
+    "Metcalf",
+    "Miller",
+    "Minden",
+    "Mo-Champ",
+    "New Pem",
+    "Olney",
+    "Perkins",
+    "Sears",
+    "Slater",
+    "Wayland",
+    "Wellness",
+    "West",
+    "Young O",
+    "111 Brown St",
+    "219 Bowen St",
+  ];
 
   return (
     <div className="terms-and-profile">
@@ -49,12 +88,15 @@ export default function TermsAndProfile({
         value={nickname}
         onChange={(e) => setNickname(e.target.value)}
       />
-      <input
-        type="text"
-        placeholder="Dorm"
-        value={dorm}
-        onChange={(e) => setDorm(e.target.value)}
-      />
+      <select value={dorm} onChange={(e) => setDorm(e.target.value)}>
+        <option value="">Select your dorm</option>
+        {dormOptions.map((d) => (
+          <option key={d} value={d}>
+            {d}
+          </option>
+        ))}
+      </select>
+
       <button
         onClick={handleProfileSave}
         disabled={!nickname || !dorm || !acceptedTerms || saving}

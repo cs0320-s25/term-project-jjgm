@@ -12,29 +12,28 @@ export default function BeatmapSelections() {
   const [section, setSection] = useState<Section | null>(null);
   const [genre, setGenre] = useState<string>("");
 
-  const genreOptions = ["Pop", "90s RnB", "Hip-Hop/Rap", "Afrobeats", "Country"];
-
-  // const handleGenreChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-  //   setGenre(genre.toLowerCase());
-  //   setSection(Section.SONGS_GAME);
-  // };
+  const genreOptions = [
+    { label: "Pop", value: "pop" },
+    { label: "90s RnB", value: "rnb" },
+    { label: "Hip-Hop/Rap", value: "hiphop" },
+    { label: "Afrobeats", value: "afrobeats" },
+    { label: "Country", value: "country" },
+  ];
 
   const handleGenreChange = (g: string) => {
     setGenre(g);
     setSection(Section.SONGS_GAME);
   };
-  
 
   return (
     <div className="beatmap-container">
-      <h1 className="beatmap-title" aria-label="Gearup Title">BeatMap</h1>
+      <h1 className="beatmap-title" aria-label="Gearup Title">
+        BeatMap
+      </h1>
       <div className="beatmap-nav">
-        <button 
-        >
-          GUESS SONGS
-        </button>
-        <button 
-          className={section === Section.MAP_DEMO ? "active" : ""} 
+        <button>GUESS SONGS</button>
+        <button
+          className={section === Section.MAP_DEMO ? "active" : ""}
           onClick={() => setSection(Section.MAP_DEMO)}
         >
           BEATMAP
@@ -47,15 +46,15 @@ export default function BeatmapSelections() {
           <div className="genre-modal">
             <h3>What genre would you like to play?</h3>
             {genreOptions.map((g) => (
-              <button key={g} onClick={() => handleGenreChange(g)}>
-                {g.toUpperCase()}
+              <button key={g.value} onClick={() => handleGenreChange(g.value)}>
+                {g.label.toUpperCase()}
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {section === Section.SONGS_GAME ? <SongsGame genre={genre}/> : null}
+      {section === Section.SONGS_GAME ? <SongsGame genre={genre} /> : null}
       {section === Section.MAP_DEMO ? <Mapbox /> : null}
     </div>
   );
