@@ -1,9 +1,15 @@
 import { useEffect, useState, useRef } from "react";
 // import { guessSong, clearUser, getSong } from "../utils/api";
 import { useUser } from "@clerk/clerk-react";
+import { Section } from "./BeatmapSections"; // make sure you import the enum
 
-export default function SongsGame({ genre }: { genre: string }) {
-  console.log("🎮 SongsGame loaded");
+export default function SongsGame({
+  genre,
+  setSection,
+}: {
+  genre: string;
+  setSection: React.Dispatch<React.SetStateAction<Section | null>>;
+}) {
   const [tracks, setTracks] = useState<any[]>([]); // tracks loaded
   const [currentTrack, setCurrentTrack] = useState<any | null>(null); // current track playing
   const [input, setInput] = useState(""); // user input
@@ -14,10 +20,11 @@ export default function SongsGame({ genre }: { genre: string }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [roundComplete, setRoundComplete] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  const [playedTrackIds, setPlayedTrackIds] = useState<number[]>([]); // makes sure songs dont repeat in a single round
+  const [hasPlayed, setHasPlayed] = useState(false); // makes sure snippet has been played at least once
 
   const maxAttempts = 5;
   const maxRounds = 5;
-  const snippetLength = 5; // seconds
   const scoreByAttempt = [100, 80, 60, 40, 20];
 
   const fetchPreviewUrl = async (trackID: number): Promise<string | null> => {
@@ -36,11 +43,14 @@ export default function SongsGame({ genre }: { genre: string }) {
     import(`../catalog/${genre}.json`).then((mod) => {
       const allTracks = mod.default;
       setTracks(allTracks);
-      const random = allTracks[Math.floor(Math.random() * allTracks.length)];
-      setCurrentTrack(random);
+
+      const first = allTracks[Math.floor(Math.random() * allTracks.length)];
+      setPlayedTrackIds([first.trackID]);
+      setCurrentTrack(first);
       setAttempts(0);
       setInput("");
       setFeedback("");
+      setHasPlayed(false);
     });
   }, [genre]);
 
@@ -53,16 +63,20 @@ export default function SongsGame({ genre }: { genre: string }) {
     }
 
     if (!currentTrack) return;
+g
+    const userGuess = input.trim().toLowerCase();
+    const songTitle = currentTrack.title.trim().toLowerCase();
 
-    const correct = currentTrack.title
-      .toLowerCase()
-      .includes(input.toLowerCase());
+    const correct = userGuess.length > 0 && songTitle === userGuess;
 
     if (correct) {
       const earned = scoreByAttempt[attempts];
       setScore(score + earned);
       setFeedback(`🔥 Correct! You earned ${earned} heats`);
       setRoundComplete(true);
+      if (round >= maxRounds) {
+        setGameOver(true);
+      }
     } else {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
@@ -74,7 +88,8 @@ export default function SongsGame({ genre }: { genre: string }) {
           setRoundComplete(true);
         } else {
           setFeedback(`${message} Game Over!`);
-          setRoundComplete(true); // YES OR NO???
+          setRoundComplete(true);
+          setGameOver(true);
         }
       } else {
         setFeedback(
@@ -92,15 +107,30 @@ export default function SongsGame({ genre }: { genre: string }) {
       return;
     }
 
-    const next = tracks[Math.floor(Math.random() * tracks.length)];
+    const availableTracks = tracks.filter(
+      (track) => !playedTrackIds.includes(track.trackID)
+    );
+
+    if (availableTracks.length === 0) {
+      // hopefully never triggered
+      setFeedback("All songs used!");
+      setGameOver(true);
+      return;
+    }
+
+    const next =
+      availableTracks[Math.floor(Math.random() * availableTracks.length)];
+    setPlayedTrackIds((prev) => [...prev, next.trackID]);
     setCurrentTrack(next);
     setInput("");
     setAttempts(0);
     setFeedback("");
     setRound(round + 1);
     setRoundComplete(false);
+    setHasPlayed(false);
   };
 
+  // Play the preview with a time limit
   const playPreviewWithLimit = async (trackID: number, seconds: number) => {
     const previewUrl = await fetchPreviewUrl(trackID);
     if (!previewUrl) {
@@ -126,6 +156,8 @@ export default function SongsGame({ genre }: { genre: string }) {
       audio.pause();
       audio.currentTime = 0;
     }, seconds * 1000);
+
+    setHasPlayed(true);
   };
 
   //  will be useful later for user tracking
@@ -146,14 +178,20 @@ export default function SongsGame({ genre }: { genre: string }) {
           <strong>Your Final Score:</strong> {score} out of {maxRounds * 100}
         </p>
         <p>
+          <strong>Congrats (player name)!</strong>
+        </p>
+        <p>
           <strong>
-            (player name), you earned {score} {genre} points for (dorm name)
-            today. Make sure to come back tomorrow!
+            You earned {score} {genre} points for (dorm name) today.
           </strong>
+        </p>
+        <p>
+          <strong>Make sure to come back tomorrow!</strong>
         </p>
       </div>
     );
   }
+
   return (
     <div className="songs-game">
       <h2>Guess Songs</h2>
@@ -166,27 +204,62 @@ export default function SongsGame({ genre }: { genre: string }) {
         value={input}
         onChange={(e) => setInput(e.target.value)}
       />
-      <div>
-        <button
-          onClick={async () => {
-            if (!currentTrack) return;
-            const duration = Math.min((attempts + 1) * 5, 30); // 5s, 10s, 15s, ... max 30s
-            playPreviewWithLimit(currentTrack.trackID, duration);
-          }}
-        >
-          ▶️ Play
-        </button>
 
-        <button onClick={handleSubmit}>Submit</button>
+      <div>
+        {!roundComplete && ( // conditionally show play & submit buttons!
+          <>
+            <button
+              onClick={async () => {
+                if (!currentTrack) return;
+                const duration = Math.min((attempts + 1) * 5, 30);
+                playPreviewWithLimit(currentTrack.trackID, duration);
+              }}
+            >
+              ▶️ Play
+            </button>
+
+            <button
+              onClick={handleSubmit}
+              disabled={attempts === 0 && !hasPlayed && !roundComplete}
+              style={{
+                opacity:
+                  attempts === 0 && !hasPlayed && !roundComplete ? 0.6 : 1,
+                cursor:
+                  attempts === 0 && !hasPlayed && !roundComplete
+                    ? "not-allowed"
+                    : "pointer",
+              }}
+            >
+              Submit
+            </button>
+          </>
+        )}
+
         {roundComplete && round < maxRounds && (
           <button onClick={nextRound}>▶️ Play Next Song</button>
         )}
+        {roundComplete && round < maxRounds && (
+          <button
+            onClick={() => setSection(Section.GENRE_SELECT)}
+            style={{ marginLeft: "10px" }}
+          >
+            🔙 Back to Genre Select
+          </button>
+        )}
       </div>
 
-      <p><strong>Score:</strong> {score}</p>
-      <p><strong>Response:</strong> {feedback}</p>
-      <p><strong>Round:</strong> {round} / {maxRounds}</p>
-      <p><strong>Attempts:</strong> {attempts} / {maxAttempts}</p>
+      <p>
+        <strong>Score:</strong> {score}
+      </p>
+      <p>
+        <strong>Response:</strong> {feedback}
+      </p>
+      <p>
+        <strong>Round:</strong> {round} / {maxRounds}
+      </p>
+      <p>
+        <strong>Attempts:</strong> {attempts} / {maxAttempts}
+      </p>
       <p>
         <strong>Now playing:</strong> {currentTrack?.title} by{" "}
         {currentTrack?.artist}

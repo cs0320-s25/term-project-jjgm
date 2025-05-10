@@ -3,13 +3,14 @@ import SongsGame from "./SongsGame";
 import Mapbox from "./Mapbox";
 import "../styles/MapStyles.css";
 
-enum Section {
+export enum Section {
   SONGS_GAME = "SONGS_GAME",
   MAP_DEMO = "MAP_DEMO",
+  GENRE_SELECT = "GENRE_SELECT",
 }
 
 export default function BeatmapSelections() {
-  const [section, setSection] = useState<Section | null>(null);
+  const [section, setSection] = useState<Section | null>(Section.GENRE_SELECT);
   const [genre, setGenre] = useState<string>("");
 
   const genreOptions = [
@@ -31,7 +32,9 @@ export default function BeatmapSelections() {
         BeatMap
       </h1>
       <div className="beatmap-nav">
-        <button>GUESS SONGS</button>
+        <button onClick={() => setSection(Section.SONGS_GAME)}
+        >
+          GUESS SONGS</button>
         <button
           className={section === Section.MAP_DEMO ? "active" : ""}
           onClick={() => setSection(Section.MAP_DEMO)}
@@ -41,7 +44,8 @@ export default function BeatmapSelections() {
       </div>
 
       {/* Genre selection modal overlay */}
-      {section === null && (
+      {/* {section === null && ( */}
+      {section === Section.GENRE_SELECT  && (
         <div className="genre-overlay">
           <div className="genre-modal">
             <h3>What genre would you like to play?</h3>
@@ -54,7 +58,11 @@ export default function BeatmapSelections() {
         </div>
       )}
 
-      {section === Section.SONGS_GAME ? <SongsGame genre={genre} /> : null}
+      {/* {section === Section.SONGS_GAME ? <SongsGame genre={genre} /> : null} */}
+      {section === Section.SONGS_GAME ? (
+  <SongsGame genre={genre} setSection={setSection} />
+) : null}
+
       {section === Section.MAP_DEMO ? <Mapbox /> : null}
     </div>
   );
