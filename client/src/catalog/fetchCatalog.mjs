@@ -27,7 +27,6 @@ async function fetchTracksFromPlaylist(playlistId, genre) {
       trackID: track.id,
       title: track.title,
       artist: track.artist.name,
-      // preview_url: track.preview
     }));
 }
 
@@ -37,14 +36,8 @@ async function fetchTracksFromPlaylist(playlistId, genre) {
   }
 
   for (const [genre, playlistId] of Object.entries(playlistsByGenre)) {
-    console.log(`🔍 Fetching ${genre} tracks...`);
     const tracks = await fetchTracksFromPlaylist(playlistId, genre);
-
     const filePath = `${outputDir}/${genre}.json`;
     writeFileSync(filePath, JSON.stringify(tracks, null, 2));
-
-    console.log(`✅ Saved ${tracks.length} ${genre} tracks to ${filePath}`);
   }
-
-  console.log("🎉 All genre catalogs saved!");
 })();

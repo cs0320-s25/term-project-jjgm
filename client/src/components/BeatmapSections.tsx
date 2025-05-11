@@ -1,5 +1,5 @@
 import { useState } from "react";
-import SongsGame from "./SongsGame";
+import SongsGame from "./Game/SongsGame";
 import Mapbox from "./Mapbox";
 import "../styles/MapStyles.css";
 
@@ -32,9 +32,9 @@ export default function BeatmapSelections() {
         BeatMap
       </h1>
       <div className="beatmap-nav">
-        <button onClick={() => setSection(Section.SONGS_GAME)}
-        >
-          GUESS SONGS</button>
+        <button onClick={() => setSection(Section.SONGS_GAME)}>
+          GUESS SONGS
+        </button>
         <button
           className={section === Section.MAP_DEMO ? "active" : ""}
           onClick={() => setSection(Section.MAP_DEMO)}
@@ -45,7 +45,7 @@ export default function BeatmapSelections() {
 
       {/* Genre selection modal overlay */}
       {/* {section === null && ( */}
-      {section === Section.GENRE_SELECT  && (
+      {section === Section.GENRE_SELECT && (
         <div className="genre-overlay">
           <div className="genre-modal">
             <h3>What genre would you like to play?</h3>
@@ -60,8 +60,8 @@ export default function BeatmapSelections() {
 
       {/* {section === Section.SONGS_GAME ? <SongsGame genre={genre} /> : null} */}
       {section === Section.SONGS_GAME ? (
-  <SongsGame genre={genre} setSection={setSection} />
-) : null}
+        <SongsGame genre={genre} setSection={setSection} />
+      ) : null}
 
       {section === Section.MAP_DEMO ? <Mapbox /> : null}
     </div>

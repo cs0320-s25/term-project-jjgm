@@ -1,0 +1,26 @@
+{
+	"info": {
+		"_postman_id": "e25ce7f2-ba12-48a4-9946-3ed68878cfce",
+		"name": "Deezer testing!",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "42001365"
+	},
+	"item": [
+		{
+			"name": "Deezer endpoint can be called and return JSON",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "bad URL",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	]
+}
