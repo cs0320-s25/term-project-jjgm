@@ -11,6 +11,9 @@ public interface StorageInterface {
   List<Map<String, Object>> getCollection(String uid, String collection_id)
       throws InterruptedException, ExecutionException;
 
+  Map<String, Object> getDocumentData(String uid, String collection_id, String doc_id)
+      throws InterruptedException, ExecutionException;
+
   void clearUser(String uid) throws InterruptedException, ExecutionException;
 
   void addPin(String uid, String pinId, Map<String, Object> pinData);

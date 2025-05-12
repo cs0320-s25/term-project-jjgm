@@ -4,6 +4,7 @@ import com.google.api.core.ApiFuture;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
@@ -69,6 +70,30 @@ public class FirebaseUtilities implements StorageInterface {
     }
 
     return data;
+  }
+
+  @Override
+  public Map<String, Object> getDocumentData(String uid, String collection_id, String doc_id)
+      throws InterruptedException, ExecutionException, IllegalArgumentException {
+    if (uid == null || collection_id == null || doc_id == null) {
+      throw new IllegalArgumentException(
+          "getDocumentData: uid, collection_id, or doc_id cannot be null");
+    }
+
+    // Gets data for a specific document in a collection
+    Firestore db = FirestoreClient.getFirestore();
+    DocumentReference docRef =
+        db.collection("users").document(uid).collection(collection_id).document(doc_id);
+
+    // Get the document
+    DocumentSnapshot docSnapshot = docRef.get().get();
+
+    // Check if document exists
+    if (docSnapshot.exists()) {
+      return docSnapshot.getData();
+    } else {
+      return null;
+    }
   }
 
   @Override

@@ -6,13 +6,16 @@ import edu.brown.cs.student.main.server.datasource.DefaultDataSource;
 import edu.brown.cs.student.main.server.datasource.GeoDataSource;
 import edu.brown.cs.student.main.server.datasource.cache.CacheDataSource;
 import edu.brown.cs.student.main.server.handlers.AddPinHandler;
+import edu.brown.cs.student.main.server.handlers.AddPointsHandler;
 import edu.brown.cs.student.main.server.handlers.AddWordHandler;
 import edu.brown.cs.student.main.server.handlers.ClearPinsHandler;
 import edu.brown.cs.student.main.server.handlers.ClearUserHandler;
+import edu.brown.cs.student.main.server.handlers.GetUserStatsHandler;
 import edu.brown.cs.student.main.server.handlers.ListPinsHandler;
 import edu.brown.cs.student.main.server.handlers.ListWordsHandler;
 import edu.brown.cs.student.main.server.handlers.RedLiningHandler;
 import edu.brown.cs.student.main.server.handlers.SearchAreasHandler;
+import edu.brown.cs.student.main.server.handlers.SetCategoryHandler;
 import edu.brown.cs.student.main.server.parser.GeoJsonObject;
 import edu.brown.cs.student.main.server.parser.JSONParser2;
 import edu.brown.cs.student.main.server.storage.FirebaseUtilities;
@@ -40,13 +43,20 @@ public class Server {
     try {
       firebaseUtils = new FirebaseUtilities();
 
+      // Pin handlers
       Spark.get("add-pin", new AddPinHandler(firebaseUtils));
       Spark.get("list-pins", new ListPinsHandler(firebaseUtils));
       Spark.get("clear-pins", new ClearPinsHandler(firebaseUtils));
 
+      // Word handlers for song game
       Spark.get("add-word", new AddWordHandler(firebaseUtils));
       Spark.get("list-words", new ListWordsHandler(firebaseUtils));
       Spark.get("clear-user", new ClearUserHandler(firebaseUtils));
+
+      // New handlers for points and categories
+      Spark.get("add-points", new AddPointsHandler(firebaseUtils));
+      Spark.get("get-user-stats", new GetUserStatsHandler(firebaseUtils));
+      Spark.get("set-category", new SetCategoryHandler(firebaseUtils));
 
       String workingDirectory = System.getProperty("user.dir");
       String geoJsonPath =
