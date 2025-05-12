@@ -17,6 +17,8 @@ Frontend Game:
 
 --> The “Switch Genre” button only appears between rounds, allowing users to change categories without disrupting gameplay. This also minimizes clutter during active guessing.
 
+--> Preloaded genre-specific songs by importing JSON files from Deezer, which ensures reliable access without runtime dependency on their API. This catalog doesn't auto-update with Deezer, but guarantees consistent gameplay and prevents unexpected failure during development.
+
 # Errors/Bugs
 
 

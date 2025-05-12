@@ -1,4 +1,20 @@
 import { useEffect, useState, useRef } from "react";
+import pop from "../../catalog/pop.json";
+import rnb from "../../catalog/rnb.json";
+import afrobeats from "../../catalog/afrobeats.json";
+import hiphop from "../../catalog/hiphop.json";
+import country from "../../catalog/country.json";
+
+
+const genreMap: Record<string, any[]> = {
+  pop,
+  rnb,
+  afrobeats,
+  hiphop,
+  country,
+};
+
+
 
 export function useSongGameLogic(genre: string) {
   // states
@@ -142,19 +158,33 @@ export function useSongGameLogic(genre: string) {
     }
   }; 
 
+
   useEffect(() => {
-    import(`../catalog/${genre}.json`).then((mod) => {
-      const allTracks = mod.default;
-      setTracks(allTracks);
-      const first = allTracks[Math.floor(Math.random() * allTracks.length)];
-      setPlayedTrackIds([first.trackID]);
-      setCurrentTrack(first);
-      setAttempts(0);
-      setInput("");
-      setFeedback("");
-      setHasPlayed(false);
-    });
+    const allTracks = genreMap[genre];
+    if (!allTracks) {
+      console.error(`Genre "${genre}" not found in genreMap`);
+      return;
+    }
+  
+    setTracks(allTracks);
+    const first = allTracks[Math.floor(Math.random() * allTracks.length)];
+    setPlayedTrackIds([first.trackID]);
+    setCurrentTrack(first);
+    setAttempts(0);
+    setInput("");
+    setFeedback("");
+    setHasPlayed(false);
   }, [genre]);
+  
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
+  }, []);
+  
 
   return {
     // state
