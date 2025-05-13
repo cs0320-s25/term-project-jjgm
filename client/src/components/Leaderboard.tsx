@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { useUser } from "@clerk/clerk-react";
-import { getUserProfile } from "../utils/api";
+// src/components/Leaderboard/Leaderboard.tsx
+import React, { useEffect, useState } from "react";
+import { getGlobalLeaderboard, getDormLeaderboard } from "../utils/api";
 
 interface Entry {
   rank: number;
@@ -9,90 +9,106 @@ interface Entry {
   score: number;
 }
 
-export default function Leaderboard() {
-  const { user } = useUser();
-  const [globalEntries, setGlobalEntries] = useState<Entry[]>([]);
-  const [dormEntries, setDormEntries] = useState<Entry[]>([]);
-  const [tab, setTab] = useState<"global" | "dorm">("global");
-  const [error, setError] = useState<string>("");
+interface LeaderboardProps {
+  /**
+   * Optional dorm ID for filtering by dorm. If omitted, dorm view is disabled.
+   */
+  dormId?: string;
+}
 
-  const fetchGlobal = async () => {
-    try {
-      const r = await fetch("http://localhost:3232/leaderboard/global");
-      const d = await r.json();
-      if (d.response_type === "success") setGlobalEntries(d.entries);
-      else setError(d.error || "Failed to load global leaderboard");
-    } catch {
-      setError("Error loading global leaderboard");
-    }
-  };
-
-  const fetchDorm = async (dormId: string) => {
-    try {
-      const r = await fetch(
-        `http://localhost:3232/leaderboard/dorm/${encodeURIComponent(dormId)}`
-      );
-      const d = await r.json();
-      if (d.response_type === "success") setDormEntries(d.entries);
-      else setError(d.error || "Failed to load dorm leaderboard");
-    } catch {
-      setError("Error loading dorm leaderboard");
-    }
-  };
+const Leaderboard: React.FC<LeaderboardProps> = ({ dormId }) => {
+  const [view, setView] = useState<"global" | "dorm">("global");
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchGlobal();
-    if (user) {
-      getUserProfile(user.id).then((profile) => {
-        if (profile?.dorm) fetchDorm(profile.dorm);
-      });
-    }
-    const iv = setInterval(() => {
-      fetchGlobal();
-      if (user) {
-        getUserProfile(user.id).then((profile) => {
-          if (profile?.dorm) fetchDorm(profile.dorm);
-        });
+    setError(null);
+    setLoading(true);
+
+    // Decide which fetcher to call based on view and dormId availability
+    let fetcher: Promise<any>;
+    if (view === "dorm") {
+      if (!dormId) {
+        // No dorm ID provided, bail out
+        setEntries([]);
+        setError("Dorm leaderboard unavailable (no dorm ID).");
+        setLoading(false);
+        return;
       }
-    }, 5000);
-    return () => clearInterval(iv);
-  }, [user]);
+      fetcher = getDormLeaderboard(dormId);
+    } else {
+      fetcher = getGlobalLeaderboard();
+    }
 
-  if (error) return <div style={{ color: "red" }}>Error: {error}</div>;
-
-  const list = tab === "global" ? globalEntries : dormEntries;
+    fetcher
+      .then((data) => {
+        if (!data.entries) {
+          throw new Error("Invalid response from server");
+        }
+        setEntries(data.entries);
+      })
+      .catch((err) => {
+        console.error(err);
+        setEntries([]);
+        setError("Failed to load leaderboard.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [view, dormId]);
 
   return (
     <div>
-      <h1>Leaderboard</h1>
-      <div style={{ marginBottom: "1em" }}>
-        <button onClick={() => setTab("global")} disabled={tab === "global"}>
+      <h1>
+        {view === "global"
+          ? "Global Leaderboard"
+          : `${dormId} Dorm Leaderboard`}
+      </h1>
+
+      {/* Toggle buttons to switch between global and dorm */}
+      <div style={{ marginBottom: "1rem" }}>
+        <button onClick={() => setView("global")} disabled={view === "global"}>
           Global
         </button>
-        <button onClick={() => setTab("dorm")} disabled={tab === "dorm"}>
-          My Dorm
+        <button
+          onClick={() => setView("dorm")}
+          disabled={view === "dorm" || !dormId}
+          style={{ marginLeft: "0.5rem" }}
+        >
+          Dorm
         </button>
       </div>
-      <table border={1} cellPadding={8}>
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Nickname</th>
-            <th>Dorm</th>
-            <th>Score</th>
-          </tr>
-        </thead>
-        <tbody>
-          {list.map((e) => (
-            <tr key={e.rank}>
-              <td>{e.rank}</td>
-              <td>{e.nickname}</td>
-              <td>{e.dorm}</td>
-              <td>{e.score}</td>
+
+      {/* Loading, error, and data table */}
+      {loading ? (
+        <div>Loading leaderboard...</div>
+      ) : error ? (
+        <div>{error}</div>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Nickname</th>
+              <th>Dorm</th>
+              <th>Score</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {entries.map((entry) => (
+              <tr key={entry.rank}>
+                <td>{entry.rank}</td>
+                <td>{entry.nickname}</td>
+                <td>{entry.dorm}</td>
+                <td>{entry.score}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
-}
+};
+
+export default Leaderboard;

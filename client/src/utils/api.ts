@@ -135,3 +135,19 @@ export async function getUserProfile(uid: string) {
   }
   return null;
 }
+
+/**
+ * Fetch the top 10 global leaderboard entries.
+ */
+export async function getGlobalLeaderboard() {
+  // matches Spark.get("/leaderboard/global", …)
+  return await queryAPI("leaderboard/global", {});
+}
+
+/**
+ * Fetch the top 10 leaderboard entries for a given dorm.
+ */
+export async function getDormLeaderboard(dormId: string) {
+  // matches Spark.get("/leaderboard/dorm/:dormId", …)
+  return await queryAPI(`leaderboard/dorm/${dormId}`, {});
+}

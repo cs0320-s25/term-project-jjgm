@@ -12,7 +12,7 @@ import {
 import { useEffect, useState } from "react";
 import TermsAndProfile from "./TermsAndProfile";
 import { getUserProfile } from "../utils/api";
-import leaderboard from '.Leaderboard';
+import Leaderboard from "./Leaderboard";
 
 // Firebase config
 const firebaseConfig = {
@@ -28,6 +28,8 @@ initializeApp(firebaseConfig);
 
 function App() {
   const { user } = useUser();
+  const [userProfile, setUserProfile] = useState<{ nickname: string; dorm: string } | null>(null); //for leaderboard
+
   const [hasProfile, setHasProfile] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [nickname, setNickname] = useState<string | null>(null);
@@ -51,8 +53,10 @@ function App() {
     ) {
       setHasProfile(true);
       setNickname(profile.nickname);
+      setUserProfile({ nickname: profile.nickname, dorm: profile.dorm }); // for leaderboard
     } else {
       setHasProfile(false);
+      setUserProfile(null) //for leaderboard
     }
   } catch (error) {
     console.error("Failed to fetch profile:", error);
@@ -104,6 +108,7 @@ function App() {
               <UserButton />
             </div>
             <MapsGearup />
+            <Leaderboard dormId = {userProfile?.dorm} />
           </div>
         )}
         <SignOutButton />
