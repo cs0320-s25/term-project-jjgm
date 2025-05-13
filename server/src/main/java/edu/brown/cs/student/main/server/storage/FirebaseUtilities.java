@@ -4,9 +4,8 @@ import com.google.api.core.ApiFuture;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.Query;
-import com.google.cloud.firestore.Query.Direction;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.google.firebase.FirebaseApp;
@@ -72,6 +71,30 @@ public class FirebaseUtilities implements StorageInterface {
     }
 
     return data;
+  }
+
+  @Override
+  public Map<String, Object> getDocumentData(String uid, String collection_id, String doc_id)
+      throws InterruptedException, ExecutionException, IllegalArgumentException {
+    if (uid == null || collection_id == null || doc_id == null) {
+      throw new IllegalArgumentException(
+          "getDocumentData: uid, collection_id, or doc_id cannot be null");
+    }
+
+    // Gets data for a specific document in a collection
+    Firestore db = FirestoreClient.getFirestore();
+    DocumentReference docRef =
+        db.collection("users").document(uid).collection(collection_id).document(doc_id);
+
+    // Get the document
+    DocumentSnapshot docSnapshot = docRef.get().get();
+
+    // Check if document exists
+    if (docSnapshot.exists()) {
+      return docSnapshot.getData();
+    } else {
+      return null;
+    }
   }
 
   @Override
@@ -201,28 +224,52 @@ public class FirebaseUtilities implements StorageInterface {
     }
   }
 
+  // modified as per point logic in other classes --dorm one changed as well.
   @Override
   public List<Map<String, Object>> getGlobalLeaderboard(int limit)
       throws InterruptedException, ExecutionException {
 
     Firestore db = FirestoreClient.getFirestore();
 
-    QuerySnapshot snapshot =
-        db.collection("users")
-            .orderBy("cumulativePoints", Query.Direction.DESCENDING)
-            .limit(limit)
-            .get()
-            .get();
+    // fetch all profile docs across all users:
+    List<QueryDocumentSnapshot> profiles = db.collectionGroup("profile").get().get().getDocuments();
+
+    // build list of entries with tot points:
+
+    List<Map<String, Object>> globalLeaderboard = new ArrayList<>();
+
+    for (QueryDocumentSnapshot doc : profiles) {
+      String uid =
+          doc.getReference()
+              .getParent() // users/{uid}/profile
+              .getParent() // users/{uid}
+              .getId();
+
+      String nickname = doc.getString("nickname");
+      String dorm = doc.getString("dorm");
+      Long score = getTotalPoints(uid);
+
+      Map<String, Object> profile = new HashMap<>();
+      profile.put("nickname", nickname);
+      profile.put("dorm", dorm);
+      profile.put("score", score);
+      globalLeaderboard.add(profile);
+    }
+
+    // sort descending:
+
+    globalLeaderboard.sort((a, b) -> Long.compare((Long) b.get("score"), (Long) a.get("score")));
+
+    // take top N and assign their ranks:
 
     List<Map<String, Object>> leaderboard = new ArrayList<>();
+
     int rank = 1;
 
-    for (QueryDocumentSnapshot doc : snapshot.getDocuments()) {
-      Map<String, Object> entry = new HashMap<>();
+    for (Map<String, Object> entry : globalLeaderboard) {
+      if (rank > limit) break;
+
       entry.put("rank", rank++);
-      entry.put("nickname", doc.getData().get("nickname"));
-      entry.put("dorm", doc.getString("dorm"));
-      entry.put("score", doc.getLong("cumulativePoints"));
       leaderboard.add(entry);
     }
     return leaderboard;
@@ -234,23 +281,67 @@ public class FirebaseUtilities implements StorageInterface {
 
     Firestore db = FirestoreClient.getFirestore();
 
-    QuerySnapshot snapshot =
-        db.collection("users")
-            .whereEqualTo("dorm", dormId)
-            .orderBy("cumulativePoints", Direction.DESCENDING)
-            .limit(limit)
-            .get()
-            .get();
+    // fetch every profile doc across all users:
+
+    List<QueryDocumentSnapshot> profiles = db.collectionGroup("profile").get().get().getDocuments();
+
+    // filtered by dorm:
+
+    List<Map<String, Object>> dormLeaderboard = new ArrayList<>();
+    for (QueryDocumentSnapshot doc : profiles) {
+      String userDorm = doc.getString("dorm");
+      if (!userDorm.equals(dormId)) continue;
+
+      String uid = doc.getReference().getParent().getParent().getId();
+
+      String nickname = doc.getString("nickname");
+      long score = getTotalPoints(uid);
+
+      Map<String, Object> profile = new HashMap<>();
+
+      profile.put("nickname", nickname);
+      profile.put("dorm", userDorm);
+      profile.put("score", score);
+      dormLeaderboard.add(profile);
+    }
+
+    // sort descending:
+
+    dormLeaderboard.sort((a, b) -> Long.compare((Long) b.get("score"), (Long) a.get("score")));
+
+    // take top n and assign ranks:
+
     List<Map<String, Object>> leaderboard = new ArrayList<>();
     int rank = 1;
-    for (QueryDocumentSnapshot doc : snapshot.getDocuments()) {
-      Map<String, Object> entry = new HashMap<>();
+    for (Map<String, Object> entry : dormLeaderboard) {
+      if (rank > limit) break;
       entry.put("rank", rank++);
-      entry.put("nickname", doc.getData().get("nickname"));
-      entry.put("dorm", doc.getString("dorm"));
-      entry.put("score", doc.getLong("cumulativePoints"));
       leaderboard.add(entry);
     }
     return leaderboard;
+  }
+
+  @Override
+  public long getTotalPoints(String uid) throws InterruptedException, ExecutionException {
+    // fetch all cats for specific user:
+
+    List<QueryDocumentSnapshot> docs =
+        FirestoreClient.getFirestore()
+            .collection("users")
+            .document(uid)
+            .collection("categories")
+            .get()
+            .get()
+            .getDocuments();
+
+    long sum = 0L;
+
+    for (QueryDocumentSnapshot doc : docs) {
+      if (doc.contains("total_points")) {
+        // might arise a NullPointer issue
+        sum += doc.getLong("total_points");
+      }
+    }
+    return sum;
   }
 }

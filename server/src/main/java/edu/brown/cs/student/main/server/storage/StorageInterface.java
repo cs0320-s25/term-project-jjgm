@@ -11,6 +11,9 @@ public interface StorageInterface {
   List<Map<String, Object>> getCollection(String uid, String collection_id)
       throws InterruptedException, ExecutionException;
 
+  Map<String, Object> getDocumentData(String uid, String collection_id, String doc_id)
+      throws InterruptedException, ExecutionException;
+
   void clearUser(String uid) throws InterruptedException, ExecutionException;
 
   void addPin(String uid, String pinId, Map<String, Object> pinData);
@@ -28,4 +31,7 @@ public interface StorageInterface {
    */
   List<Map<String, Object>> getDormLeaderboard(String dormId, int limit)
       throws InterruptedException, ExecutionException;
+
+  /** sum up and return user’s total points across all categories. */
+  long getTotalPoints(String uid) throws InterruptedException, ExecutionException;
 }
