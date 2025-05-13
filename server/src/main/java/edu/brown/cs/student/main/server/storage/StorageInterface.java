@@ -34,4 +34,8 @@ public interface StorageInterface {
 
   /** sum up and return user’s total points across all categories. */
   long getTotalPoints(String uid) throws InterruptedException, ExecutionException;
+
+  // new -- might break.
+  /** atomically imcrement user points. */
+  void incrementUserPoints(String uid, long delta) throws InterruptedException, ExecutionException;
 }

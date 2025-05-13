@@ -41,6 +41,8 @@ public class SaveProfileHandler implements Route {
       Map<String, Object> profile = new HashMap<>();
       profile.put("nickname", input.nickname);
       profile.put("dorm", input.dorm);
+      // new -- trying to add points to profile as to not have loops in place:
+      profile.put("cumulativePoints", 0L);
 
       storageHandler.addDocument(input.userId, "profile", input.userId, profile);
 

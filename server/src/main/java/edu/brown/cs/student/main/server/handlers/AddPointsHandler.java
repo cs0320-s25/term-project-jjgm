@@ -52,6 +52,10 @@ public class AddPointsHandler implements Route {
 
       this.storageHandler.addDocument(uid, "point_history", pointHistoryId, pointHistoryData);
 
+      // new line for atomically adding points (incrementing cumulativePoints
+
+      this.storageHandler.incrementUserPoints(uid, points);
+
       responseMap.put("response_type", "success");
       responseMap.put("total_points", totalPoints);
       responseMap.put("category", category);

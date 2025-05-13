@@ -5,7 +5,10 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Query;
+import com.google.cloud.firestore.Query.Direction;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.google.firebase.FirebaseApp;
@@ -231,48 +234,27 @@ public class FirebaseUtilities implements StorageInterface {
 
     Firestore db = FirestoreClient.getFirestore();
 
-    // fetch all profile docs across all users:
-    List<QueryDocumentSnapshot> profiles = db.collectionGroup("profile").get().get().getDocuments();
-
-    // build list of entries with tot points:
+    List<QueryDocumentSnapshot> docs =
+        db.collectionGroup("profile")
+            .orderBy("cumulativePoints", Query.Direction.DESCENDING)
+            .limit(limit)
+            .get()
+            .get()
+            .getDocuments();
 
     List<Map<String, Object>> globalLeaderboard = new ArrayList<>();
 
-    for (QueryDocumentSnapshot doc : profiles) {
-      String uid =
-          doc.getReference()
-              .getParent() // users/{uid}/profile
-              .getParent() // users/{uid}
-              .getId();
-
-      String nickname = doc.getString("nickname");
-      String dorm = doc.getString("dorm");
-      Long score = getTotalPoints(uid);
-
-      Map<String, Object> profile = new HashMap<>();
-      profile.put("nickname", nickname);
-      profile.put("dorm", dorm);
-      profile.put("score", score);
-      globalLeaderboard.add(profile);
-    }
-
-    // sort descending:
-
-    globalLeaderboard.sort((a, b) -> Long.compare((Long) b.get("score"), (Long) a.get("score")));
-
-    // take top N and assign their ranks:
-
-    List<Map<String, Object>> leaderboard = new ArrayList<>();
-
     int rank = 1;
 
-    for (Map<String, Object> entry : globalLeaderboard) {
-      if (rank > limit) break;
-
-      entry.put("rank", rank++);
-      leaderboard.add(entry);
+    for (var doc : docs) {
+      Map<String, Object> data = new HashMap<>();
+      data.put("rank", rank++);
+      data.put("nickname", doc.getString("nickname"));
+      data.put("dorm", doc.getString("dorm"));
+      data.put("score", doc.getLong("cumulativePoints"));
+      globalLeaderboard.add(data);
     }
-    return leaderboard;
+    return globalLeaderboard;
   }
 
   @Override
@@ -281,44 +263,28 @@ public class FirebaseUtilities implements StorageInterface {
 
     Firestore db = FirestoreClient.getFirestore();
 
-    // fetch every profile doc across all users:
+    List<QueryDocumentSnapshot> docs =
+        db.collectionGroup("profile")
+            .whereEqualTo("dorm", dormId)
+            .orderBy("cumulativePoints", Direction.DESCENDING)
+            .limit(limit)
+            .get()
+            .get()
+            .getDocuments();
 
-    List<QueryDocumentSnapshot> profiles = db.collectionGroup("profile").get().get().getDocuments();
-
-    // filtered by dorm:
+    // lines start repeating here, def a way to lessen lines of code by making helper.
 
     List<Map<String, Object>> dormLeaderboard = new ArrayList<>();
-    for (QueryDocumentSnapshot doc : profiles) {
-      String userDorm = doc.getString("dorm");
-      if (!userDorm.equals(dormId)) continue;
-
-      String uid = doc.getReference().getParent().getParent().getId();
-
-      String nickname = doc.getString("nickname");
-      long score = getTotalPoints(uid);
-
-      Map<String, Object> profile = new HashMap<>();
-
-      profile.put("nickname", nickname);
-      profile.put("dorm", userDorm);
-      profile.put("score", score);
-      dormLeaderboard.add(profile);
-    }
-
-    // sort descending:
-
-    dormLeaderboard.sort((a, b) -> Long.compare((Long) b.get("score"), (Long) a.get("score")));
-
-    // take top n and assign ranks:
-
-    List<Map<String, Object>> leaderboard = new ArrayList<>();
     int rank = 1;
-    for (Map<String, Object> entry : dormLeaderboard) {
-      if (rank > limit) break;
-      entry.put("rank", rank++);
-      leaderboard.add(entry);
+    for (var doc : docs) {
+      Map<String, Object> data = new HashMap<>();
+      data.put("rank", rank++);
+      data.put("nickname", doc.getString("nickname"));
+      data.put("dorm", doc.getString("dorm"));
+      data.put("score", doc.getLong("cumulativePoints"));
+      dormLeaderboard.add(data);
     }
-    return leaderboard;
+    return dormLeaderboard;
   }
 
   @Override
@@ -343,5 +309,20 @@ public class FirebaseUtilities implements StorageInterface {
       }
     }
     return sum;
+  }
+
+  // new for adding points
+  @Override
+  public void incrementUserPoints(String uid, long delta)
+      throws InterruptedException, ExecutionException {
+
+    Firestore db = FirestoreClient.getFirestore();
+
+    DocumentReference profRef =
+        db.collection("users").document(uid).collection("profile").document(uid);
+
+    // atomically add delta to cumulativePoints:
+
+    profRef.update("cumulativePoints", FieldValue.increment(delta));
   }
 }
