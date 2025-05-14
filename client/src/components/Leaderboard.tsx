@@ -30,8 +30,14 @@ const Leaderboard: React.FC<Props> = ({dormId}) => {
         : getGlobalLeaderboard();
 
     fetcher 
-        .then(data => setEntries(data.entries))
-        .catch(() => setError('Could not load leaderboard.'))
+        .then(data => {
+            //if data entries missing, default to empty array
+            setEntries(Array.isArray(data.entries) ? data.entries : [])
+        })
+        .catch(() => {
+            setError('Could not load leaderboard.');
+            setEntries([])
+        })
         .finally(() => setLoading(false));
     }, [view, dormId]);
 
