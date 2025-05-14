@@ -38,7 +38,6 @@ public class UpdatePointsHandler implements Route {
         return Utils.toMoshiJson(responseMap);
       }
 
-      // Check if user has reached daily limit
       int gamesPlayedToday = this.storageHandler.getGamesPlayedToday(input.userId);
       if (gamesPlayedToday >= 5) {
         responseMap.put("response_type", "failure");
@@ -46,17 +45,14 @@ public class UpdatePointsHandler implements Route {
         return Utils.toMoshiJson(responseMap);
       }
 
-      // Record this game
       this.storageHandler.recordGamePlayed(input.userId);
 
-      // Update points
       this.storageHandler.updateUserPoints(input.userId, input.genre, input.points);
 
       responseMap.put("response_type", "success");
       responseMap.put("games_played_today", gamesPlayedToday + 1);
       responseMap.put("points_added", input.points);
 
-      // Get updated points
       Map<String, Integer> userPoints = this.storageHandler.getUserPoints(input.userId);
       responseMap.put("total_points", userPoints);
 

@@ -29,7 +29,6 @@ export interface PinData {
   timestamp: number;
 }
 
-// Define interface for top categories
 interface TopCategory {
   genre: string;
   points: number;
@@ -61,7 +60,6 @@ export default function Mapbox() {
   const [minLon, setMinLon] = useState<string>("");
   const [maxLon, setMaxLon] = useState<string>("");
   
-  // State for top categories
   const [topCategories, setTopCategories] = useState<TopCategory[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -70,22 +68,20 @@ export default function Mapbox() {
   useEffect(() => {
     setOverlay(overlayData());
     
-    // Fetch user's top categories if user exists
     const fetchTopCategories = async () => {
       if (user) {
         setLoading(true);
         try {
           const result = await getUserPoints(user.id);
           if (result && result.response_type === "success" && result.points) {
-            // Convert points object to array, sort by points, and take top 3
             const categories = Object.entries(result.points)
               .map(([genre, points]) => ({
                 genre,
                 points: points as number
               }))
-              .filter(category => category.points > 0) // Only include non-zero scores
+              .filter(category => category.points > 0) // -- only include nonzero scores
               .sort((a, b) => b.points - a.points)
-              .slice(0, 3); // Get top 3
+              .slice(0, 3); // -- top 3
 
             setTopCategories(categories);
           }

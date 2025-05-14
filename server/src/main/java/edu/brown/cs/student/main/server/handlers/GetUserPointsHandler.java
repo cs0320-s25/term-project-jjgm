@@ -36,10 +36,8 @@ public class GetUserPointsHandler implements Route {
         return Utils.toMoshiJson(responseMap);
       }
 
-      // Get user points
       Map<String, Integer> userPoints = this.storageHandler.getUserPoints(input.userId);
 
-      // Get games played today
       int gamesPlayedToday = this.storageHandler.getGamesPlayedToday(input.userId);
 
       responseMap.put("response_type", "success");

@@ -36,7 +36,6 @@ public class GetDormPointsHandler implements Route {
         return Utils.toMoshiJson(responseMap);
       }
 
-      // Get dorm points
       Map<String, Integer> dormPoints = this.storageHandler.getDormPoints(input.dorm);
 
       responseMap.put("response_type", "success");
