@@ -10,7 +10,8 @@ import {
   useUser,
 } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
-import TermsAndProfile from "./TermsAndProfile";
+import TermsPage from "./TermsPage";
+import ProfilePage from "./ProfilePage";
 import { getUserPoints, getUserProfile } from "../utils/api";
 
 // Firebase config
@@ -31,6 +32,7 @@ function App() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [nickname, setNickname] = useState<string | null>(null);
   const [userPointsInfo, setUserPointsInfo] = useState<any>(null);
+  const [step, setStep] = useState<"terms" | "profile" | "main">("terms");
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -50,9 +52,12 @@ function App() {
         ) {
           setHasProfile(true);
           setNickname(profile.nickname);
-          
+
           // Store profile in localStorage for easy access in other components
-          localStorage.setItem(`userProfile_${user.id}`, JSON.stringify(profile));
+          localStorage.setItem(
+            `userProfile_${user.id}`,
+            JSON.stringify(profile)
+          );
         } else {
           setHasProfile(false);
         }
@@ -63,15 +68,29 @@ function App() {
         setProfileLoaded(true);
       }
     };
-    
+
     fetchUserProfile();
   }, [user]);
-  
+
+  // If profile is complete, skip onboarding
+  useEffect(() => {
+    if (hasProfile) {
+      setStep("main");
+    }
+  }, [hasProfile]);
+
+  // Load stored terms acceptance on refresh
+  useEffect(() => {
+    if (localStorage.getItem("TermsAccepted") === "true") {
+      setStep("profile");
+    }
+  }, []);
+
   // Fetch user points info (including games played today)
   useEffect(() => {
     const fetchUserPoints = async () => {
       if (!user || !hasProfile) return;
-      
+
       try {
         const pointsInfo = await getUserPoints(user.id);
         if (pointsInfo && pointsInfo.response_type === "success") {
@@ -81,7 +100,7 @@ function App() {
         console.error("Failed to fetch user points:", error);
       }
     };
-    
+
     fetchUserPoints();
   }, [user, hasProfile]);
 
@@ -98,11 +117,16 @@ function App() {
 
       <SignedIn>
         {!profileLoaded ? (
-          // Wait for profile check
-          <div className="landing-page" />
-        ) : !hasProfile ? (
-          // Show terms and profile creation if not yet completed
-          <TermsAndProfile onComplete={() => setHasProfile(true)} />
+          <div className="loading">Loading...</div>
+        ) : step === "terms" ? (
+          <TermsPage
+            onAccepted={() => {
+              localStorage.setItem("TermsAccepted", "true");
+              setStep("profile");
+            }}
+          />
+        ) : step === "profile" ? (
+          <ProfilePage onComplete={() => setStep("main")} />
         ) : (
           // Show main app
           <div className="main-page">
@@ -110,13 +134,17 @@ function App() {
               {nickname ? (
                 <div>
                   <span>Welcome, {nickname}!</span>
-                  {userPointsInfo && userPointsInfo.games_remaining_today !== undefined && (
-                    <span className="games-remaining">
-                      Games remaining today: {userPointsInfo.games_remaining_today}
-                    </span>
-                  )}
+                  {userPointsInfo &&
+                    userPointsInfo.games_remaining_today !== undefined && (
+                      <span className="games-remaining">
+                        Games remaining today:{" "}
+                        {userPointsInfo.games_remaining_today}
+                      </span>
+                    )}
                 </div>
-              ) : ""}
+              ) : (
+                ""
+              )}
             </div>
             <div
               style={{
