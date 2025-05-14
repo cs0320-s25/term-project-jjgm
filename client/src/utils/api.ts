@@ -138,3 +138,11 @@ export async function getUserProfile(uid: string) {
   }
   return null;
 }
+
+export async function getGlobalLeaderboard(): Promise<any> {
+  return await queryAPI("leaderboard/global", {});
+}
+
+export async function getDormLeaderboard(dormId: string): Promise<any> {
+  return await queryAPI('leaderboard/dorm/${dormId}', {});
+} 

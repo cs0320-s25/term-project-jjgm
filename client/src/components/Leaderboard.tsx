@@ -1,0 +1,85 @@
+import { useEffect, useState } from "react";
+import { getDormLeaderboard, getGlobalLeaderboard } from "../utils/api";
+
+interface Entry {
+    rank: number;
+    nickname: string;
+    dorm: string;
+    score: number;
+    dormContribution?: number;
+}
+
+interface Props {
+    /** curr user dorm or undefined if none */
+    dormId?: string;
+}
+
+const Leaderboard: React.FC<Props> = ({dormId}) => {
+    const [view, setView] = useState<'global' | 'dorm'>('global')
+    const [entries, setEntries] = useState<Entry[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+
+    useEffect(() => {
+        setLoading(true);
+        setError(null);
+        const fetcher = 
+        view == 'dorm' && dormId
+        ? getDormLeaderboard(dormId)
+        : getGlobalLeaderboard();
+
+    fetcher 
+        .then(data => setEntries(data.entries))
+        .catch(() => setError('Could not load leaderboard.'))
+        .finally(() => setLoading(false));
+    }, [view, dormId]);
+
+    return (
+        <div className = "leaderboard">
+            <h2>{view === 'global' ? 'Global Leaderboard' : '${dormId} Dorm Leaderboard'}</h2>
+            <button onClick={() => setView('global')} disabled={view === 'global'}>
+                Global
+            </button>
+            <button
+               onClick={() => setView('dorm')}
+               disabled={view === 'dorm' || !dormId}
+               style={{marginLeft: '0.5rem'}}
+            >
+                Dorm
+            </button>
+
+            {loading ? (
+                <p>Loading...</p>
+            ) : error ? (
+                <p>{error}</p>
+            ) : (
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Nickname</th>
+                            <th>Dorm</th>
+                            <th>Score</th>
+                            {view === 'dorm' && <th>Contribution</th>}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {entries.map( e => (
+                            <tr> key={e.rank}
+                            <td>{e.rank}</td>
+                            <td>{e.nickname}</td>
+                            <td>{e.dorm}</td>
+                            <td>{e.score}</td>
+                            {view === 'dorm' && <td>{e.dormContribution}</td>}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
+        </div>
+    );
+
+
+};
+export default Leaderboard

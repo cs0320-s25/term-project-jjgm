@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import TermsPage from "./TermsPage";
 import ProfilePage from "./ProfilePage";
 import { getUserPoints, getUserProfile } from "../utils/api";
+import Leaderboard from "./Leaderboard";
 
 // Firebase config
 const firebaseConfig = {
@@ -35,6 +36,7 @@ function App() {
   const [step, setStep] = useState<"terms" | "profile" | "main" | "view-terms">(
   "terms"
 );
+  const [userDorm, setUserDorm] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -55,6 +57,8 @@ function App() {
           setHasProfile(true);
           setNickname(profile.nickname);
 
+          setUserDorm(profile.dorm);
+          
           // Store profile in localStorage for easy access in other components
           localStorage.setItem(
             `userProfile_${user.id}`,
@@ -169,6 +173,8 @@ function App() {
               <UserButton />
             </div>
             <MapsGearup />
+            {/**leaderboard below map */}
+            {userDorm && <Leaderboard dormId={userDorm} />}
           </div>
         )}
       </SignedIn>
