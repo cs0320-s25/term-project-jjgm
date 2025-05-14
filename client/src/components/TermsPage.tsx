@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function TermsPage({ onAccepted }: { onAccepted: () => void }) {
+export default function TermsPage({onAccepted,readOnly = false,}: {onAccepted: () => void;readOnly?: boolean;}) {
   const [accepted, setAccepted] = useState(false);
 
   return (
@@ -18,30 +18,39 @@ export default function TermsPage({ onAccepted }: { onAccepted: () => void }) {
         </li>
         <li>Your Brown email is never shown to others.</li>
         <li>
-          All data is only used within BeatMaps for leaderboar, points, and community
-          stats.
+          All data is only used within BeatMaps for leaderboar, points, and
+          community stats.
         </li>
       </ul>
 
-      <label>
-        <input
-          type="checkbox"
-          checked={accepted}
-          onChange={(e) => setAccepted(e.target.checked)}
-        />
-        I accept the terms and conditions
-      </label>
+      {!readOnly && (
+        <>
+          <label>
+            <input
+              type="checkbox"
+              checked={accepted}
+              onChange={(e) => setAccepted(e.target.checked)}
+            />
+            I accept the terms and conditions
+          </label>
+          <br />
+          <button
+            onClick={() => {
+              localStorage.setItem("TermsAccepted", "true");
+              onAccepted();
+            }}
+            disabled={!accepted}
+          >
+            Continue
+          </button>
+        </>
+      )}
 
-      <br />
-      <button
-        onClick={() => {
-          localStorage.setItem("TermsAccepted", "true"); // Store  for later use
-          onAccepted(); // Move to the next step (profile)
-        }}
-        disabled={!accepted}
-      >
-        Continue
-      </button>
+      {readOnly && (
+        <button style={{ marginTop: "1rem" }} onClick={onAccepted}>
+          Back to App
+        </button>
+      )}
     </div>
   );
 }

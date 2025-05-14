@@ -32,7 +32,9 @@ function App() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [nickname, setNickname] = useState<string | null>(null);
   const [userPointsInfo, setUserPointsInfo] = useState<any>(null);
-  const [step, setStep] = useState<"terms" | "profile" | "main">("terms");
+  const [step, setStep] = useState<"terms" | "profile" | "main" | "view-terms">(
+  "terms"
+);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -125,8 +127,13 @@ function App() {
               setStep("profile");
             }}
           />
+        ) : step === "view-terms" ? (
+          <TermsPage readOnly onAccepted={() => setStep("main")} />
         ) : step === "profile" ? (
-          <ProfilePage onComplete={() => setStep("main")} />
+          <ProfilePage
+            onComplete={() => setStep("main")}
+            onExit={() => setStep("main")}
+          />
         ) : (
           // Show main app
           <div className="main-page">
@@ -145,6 +152,8 @@ function App() {
               ) : (
                 ""
               )}
+              <button onClick={() => setStep("profile")}>Edit Profile</button>
+              <button onClick={() => setStep("view-terms")}>View Terms</button>
             </div>
             <div
               style={{
@@ -162,7 +171,6 @@ function App() {
             <MapsGearup />
           </div>
         )}
-        <SignOutButton />
       </SignedIn>
     </div>
   );

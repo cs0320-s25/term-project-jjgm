@@ -3,9 +3,9 @@ import { useUser } from "@clerk/clerk-react";
 import { saveUserProfile } from "../utils/api";
 
 export default function ProfilePage({
-  onComplete,
+  onComplete, onExit,
 }: {
-  onComplete: () => void;
+  onComplete: () => void; onExit?: () => void;
 }) {
   const { user } = useUser();
   const [nickname, setNickname] = useState("");
@@ -93,6 +93,15 @@ export default function ProfilePage({
       >
         {saving ? "Saving..." : "Save Profile"}
       </button>
+
+      {onExit && (
+        <button
+          onClick={onExit}
+          style={{ marginLeft: "1rem", background: "lightgray" }}
+        >
+          Exit
+        </button>
+      )}
     </div>
   );
 }
