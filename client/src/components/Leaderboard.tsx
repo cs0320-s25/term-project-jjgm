@@ -22,21 +22,29 @@ const Leaderboard: React.FC<Props> = ({dormId}) => {
 
 
     useEffect(() => {
-        setLoading(true);
-        setError(null);
-        const fetcher = 
-        view == 'dorm' && dormId
-        ? getDormLeaderboard(dormId)
-        : getGlobalLeaderboard();
+      setLoading(true);
+      setError(null);
 
-    fetcher 
-        .then(data => {
-            //if data entries missing, default to empty array
-            setEntries(Array.isArray(data.entries) ? data.entries : [])
+      // when trying to view dorm but no dormId, bail out
+      if (view === "dorm" && !dormId) {
+        setEntries([]);
+        setError("No dorm selected.");
+        setLoading(false);
+        return;
+      }
+      const fetcher =
+        view == "dorm" && dormId
+          ? getDormLeaderboard(dormId)
+          : getGlobalLeaderboard();
+
+      fetcher
+        .then((data) => {
+          //if data entries missing, default to empty array
+          setEntries(Array.isArray(data.entries) ? data.entries : []);
         })
         .catch(() => {
-            setError('Could not load leaderboard.');
-            setEntries([])
+          setError("Could not load leaderboard.");
+          setEntries([]);
         })
         .finally(() => setLoading(false));
     }, [view, dormId]);
@@ -72,7 +80,7 @@ const Leaderboard: React.FC<Props> = ({dormId}) => {
                     </thead>
                     <tbody>
                         {entries.map( e => (
-                            <tr> key={e.rank}
+                            <tr key={e.rank}>
                             <td>{e.rank}</td>
                             <td>{e.nickname}</td>
                             <td>{e.dorm}</td>

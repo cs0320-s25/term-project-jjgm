@@ -62,16 +62,9 @@ public class Server {
       Spark.post("get-dorm-points", new GetDormPointsHandler(firebaseUtils));
 
       // Dorm stats endpoint - moved here before Spark.init()
-      Spark.get("get-dorm-stats", new DormStatsHandler(firebaseUtils));
+      Spark.get("/get-dorm-stats", new DormStatsHandler(firebaseUtils));
 
       String workingDirectory = System.getProperty("user.dir");
-
-      Spark.notFound(
-          (request, response) -> {
-            response.status(404); // Not Found
-            System.out.println("ERROR");
-            return "404 Not Found - The requested endpoint does not exist.";
-          });
 
       JSONParser2 parser = new JSONParser2();
       parser.createGeoJson();
@@ -106,6 +99,13 @@ public class Server {
               response.status(500);
               return "{\"error\": \"Could not fetch preview from Deezer.\"}";
             }
+          });
+
+      Spark.notFound(
+          (request, response) -> {
+            response.status(404); // Not Found
+            System.out.println("ERROR");
+            return "404 Not Found - The requested endpoint does not exist.";
           });
 
       // Initialize the server AFTER all routes have been added
