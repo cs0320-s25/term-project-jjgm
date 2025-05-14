@@ -10,6 +10,8 @@ import edu.brown.cs.student.main.server.handlers.DormStatsHandler;
 import edu.brown.cs.student.main.server.handlers.GetDormPointsHandler;
 import edu.brown.cs.student.main.server.handlers.GetProfileHandler;
 import edu.brown.cs.student.main.server.handlers.GetUserPointsHandler;
+import edu.brown.cs.student.main.server.handlers.LeaderboardDormHandler;
+import edu.brown.cs.student.main.server.handlers.LeaderboardGlobalhandler;
 import edu.brown.cs.student.main.server.handlers.SaveProfileHandler;
 import edu.brown.cs.student.main.server.handlers.UpdatePointsHandler;
 import edu.brown.cs.student.main.server.parser.GeoJsonObject;
@@ -48,6 +50,11 @@ public class Server {
 
       Spark.post("get-profile", new GetProfileHandler(firebaseUtils));
       Spark.post("save-profile", new SaveProfileHandler(firebaseUtils));
+
+      // new for leaderboard endpoints
+
+      Spark.get("/leaderboard/global", new LeaderboardGlobalhandler(firebaseUtils));
+      Spark.get("/leaderboard/dorm/:dormId", new LeaderboardDormHandler(firebaseUtils));
 
       // New endpoints for points system
       Spark.post("update-points", new UpdatePointsHandler(firebaseUtils));

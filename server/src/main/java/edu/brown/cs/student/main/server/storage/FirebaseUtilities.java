@@ -69,6 +69,96 @@ public class FirebaseUtilities implements StorageInterface {
   }
 
   @Override
+  public List<Map<String, Object>> getGlobalLeaderboard(int limit)
+      throws InterruptedException, ExecutionException {
+    Firestore db = FirestoreClient.getFirestore();
+
+    // fetch every user profile doc:
+
+    List<QueryDocumentSnapshot> profiles = db.collectionGroup("profile").get().get().getDocuments();
+
+    // make nickname, dorm, score for each:
+
+    List<Map<String, Object>> data = new ArrayList<>();
+    for (QueryDocumentSnapshot doc : profiles) {
+      String uid = doc.getReference().getParent().getParent().getId();
+      String nickname = doc.getString("nickname");
+      String dorm = doc.getString("dorm");
+      Map<String, Integer> pointsMap = getUserPoints(uid);
+      long total = pointsMap.values().stream().mapToLong(i -> i).sum();
+
+      Map<String, Object> profile = new HashMap<>();
+      profile.put("nickname", nickname);
+      profile.put("dorm", dorm);
+      profile.put("score", total);
+      data.add(profile);
+    }
+
+    data.sort((a, b) -> Long.compare((Long) b.get("score"), (Long) a.get("score")));
+
+    // assign rank to top N:
+
+    List<Map<String, Object>> out = new ArrayList<>();
+
+    for (int i = 0; i < Math.min(limit, data.size()); i++) {
+      Map<String, Object> entry = data.get(i);
+      entry.put("rank", i + 1);
+      out.add(entry);
+    }
+    return out;
+  }
+
+  @Override
+  public List<Map<String, Object>> getDormLeaderboard(String dormId, int limit)
+      throws InterruptedException, ExecutionException {
+    Firestore db = FirestoreClient.getFirestore();
+
+    // determine dorm top genre:
+
+    Map<String, Integer> dormMap = getDormPoints(dormId);
+    String topGenre =
+        dormMap.entrySet().stream()
+            .max(Map.Entry.comparingByValue())
+            .map(Map.Entry::getKey)
+            .orElse(null);
+
+    // fetch every profile, filter by dorm:
+
+    List<QueryDocumentSnapshot> profiles = db.collectionGroup("profile").get().get().getDocuments();
+
+    List<Map<String, Object>> filtered = new ArrayList<>();
+
+    for (QueryDocumentSnapshot doc : profiles) {
+      String uid = doc.getReference().getParent().getParent().getId();
+      String dorm = doc.getString("dorm");
+
+      if (!dormId.equals(dorm)) continue;
+
+      String nickname = doc.getString("nickname");
+      Map<String, Integer> pointsMap = getUserPoints(uid);
+      long total = pointsMap.values().stream().mapToLong(i -> i).sum();
+      int contribution = topGenre == null ? pointsMap.getOrDefault(topGenre, 0) : 0;
+
+      Map<String, Object> profile = new HashMap<>();
+      profile.put("nickname", nickname);
+      profile.put("dorm", dorm);
+      profile.put("score", total);
+      profile.put("contribution", contribution);
+      filtered.add(profile);
+    }
+
+    // sort
+    filtered.sort((a, b) -> Long.compare((Long) b.get("score"), (Long) a.get("score")));
+    List<Map<String, Object>> out = new ArrayList<>();
+    for (int i = 0; i < Math.min(limit, filtered.size()); i++) {
+      Map<String, Object> entry = filtered.get(i);
+      entry.put("rank", i + 1);
+      out.add(entry);
+    }
+    return out;
+  }
+
+  @Override
   public void addDocument(String uid, String collection_id, String doc_id, Map<String, Object> data)
       throws IllegalArgumentException {
     if (uid == null || collection_id == null || doc_id == null || data == null) {
