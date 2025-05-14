@@ -61,6 +61,15 @@ export async function getUserPoints(uid: string) {
   return await response.json();
 }
 
+export async function getDormStats() {
+  const response = await fetch(`${HOST}/get-dorm-stats`);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to get dorm stats: ${response.statusText}`);
+  }
+  
+  return await response.json();
+}
 
 export async function getDormPoints(dorm: string) {
   const response = await fetch(`${HOST}/get-dorm-points`, {

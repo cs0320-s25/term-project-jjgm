@@ -450,3 +450,126 @@
     padding: 3px 8px;
   }
 }
+
+/* Add to TopCategories.css */
+
+/* Map Legend */
+.map-legend {
+  position: absolute;
+  bottom: 20px;
+  left: 10px;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  padding: 12px;
+  width: 180px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  font-size: 12px;
+}
+
+.map-legend h4 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-box {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.legend-label {
+  font-size: 12px;
+}
+
+.legend-opacity {
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+}
+
+.legend-opacity p {
+  margin: 0 0 5px 0;
+  font-size: 12px;
+}
+
+.opacity-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+
+.opacity-item {
+  background-color: #333;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+/* Popup Styling */
+.dorm-popup {
+  padding: 5px;
+  min-width: 150px;
+}
+
+.dorm-popup h4 {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  color: #2c3e50;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.dorm-popup p {
+  margin: 5px 0;
+  font-size: 12px;
+}
+
+.mapboxgl-popup-content {
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.mapboxgl-popup-tip {
+  border-top-color: white !important;
+  border-bottom-color: white !important;
+}
+
+@media (max-width: 768px) {
+  .map-legend {
+    width: 130px;
+    padding: 8px;
+    font-size: 10px;
+  }
+  
+  .color-box {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .legend-label {
+    font-size: 10px;
+  }
+  
+  .opacity-item {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+}
