@@ -144,5 +144,5 @@ export async function getGlobalLeaderboard(): Promise<any> {
 }
 
 export async function getDormLeaderboard(dormId: string): Promise<any> {
-  return await queryAPI('leaderboard/dorm/${dormId}', {});
+  return await queryAPI(`leaderboard/dorm/${dormId}`, {});
 } 

@@ -52,7 +52,7 @@ const Leaderboard: React.FC<Props> = ({dormId}) => {
 
     return (
         <div className = "leaderboard">
-            <h2>{view === 'global' ? 'Global Leaderboard' : '${dormId} Dorm Leaderboard'}</h2>
+            <h2>{view === 'global' ? 'Global Leaderboard' : `${dormId} Dorm Leaderboard`}</h2>
             <button onClick={() => setView('global')} disabled={view === 'global'}>
                 Global
             </button>
