@@ -229,3 +229,224 @@
     transform: translateY(0);
   }
 }
+
+/* top categories CSS */
+/* Enhanced TopCategories.css */
+
+.top-categories-mapbox {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 15px;
+  width: 280px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(5px);
+  max-height: 320px;
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.top-categories-mapbox:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.top-categories-mapbox h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+  color: #2c3e50;
+  text-align: center;
+  border-bottom: 2px solid rgba(44, 62, 80, 0.1);
+  padding-bottom: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.categories-list-mapbox {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.category-item-mapbox {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 10px;
+  background-color: white;
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.category-item-mapbox.rank-1 {
+  border-left-color: #ffd700; /* gold */
+  background-color: rgba(255, 215, 0, 0.08);
+}
+
+.category-item-mapbox.rank-2 {
+  border-left-color: #c0c0c0; /* silver */
+  background-color: rgba(192, 192, 192, 0.08);
+}
+
+.category-item-mapbox.rank-3 {
+  border-left-color: #cd7f32; /* bronze */
+  background-color: rgba(205, 127, 50, 0.08);
+}
+
+.category-item-mapbox:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.category-rank {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border-radius: 50%;
+  margin-right: 14px;
+  font-size: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.rank-1 .category-rank {
+  background: linear-gradient(145deg, #ffd700, #f8c000);
+  color: #5a4500;
+}
+
+.rank-2 .category-rank {
+  background: linear-gradient(145deg, #d0d0d0, #a8a8a8);
+  color: #333;
+}
+
+.rank-3 .category-rank {
+  background: linear-gradient(145deg, #cd7f32, #b0682a);
+  color: white;
+}
+
+.category-info {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.category-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+.category-points {
+  font-size: 16px;
+  background-color: #2c7fb8;
+  color: white;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 5px rgba(44, 127, 184, 0.3);
+}
+
+/* Category-specific colors */
+.category-item-mapbox[data-category="pop"] .category-points {
+  background-color: #ff5252; /* red */
+}
+
+.category-item-mapbox[data-category="rnb"] .category-points {
+  background-color: #9c27b0; /* purple */
+}
+
+.category-item-mapbox[data-category="hiphop"] .category-points {
+  background-color: #ffc107; /* amber */
+}
+
+.category-item-mapbox[data-category="afrobeats"] .category-points {
+  background-color: #4caf50; /* green */
+}
+
+.category-item-mapbox[data-category="country"] .category-points {
+  background-color: #ff9800; /* orange */
+}
+
+/* Animation for when the component mounts */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.top-categories-mapbox {
+  animation: fadeSlideIn 0.4s ease-out;
+}
+
+.category-item-mapbox {
+  animation: fadeSlideIn 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.category-item-mapbox.rank-1 {
+  animation-delay: 0.1s;
+}
+
+.category-item-mapbox.rank-2 {
+  animation-delay: 0.2s;
+}
+
+.category-item-mapbox.rank-3 {
+  animation-delay: 0.3s;
+}
+
+/* Empty state */
+.no-categories {
+  text-align: center;
+  padding: 15px;
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+/* Media query for mobile devices */
+@media (max-width: 768px) {
+  .top-categories-mapbox {
+    width: calc(100% - 20px);
+    max-width: none;
+    top: auto;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    max-height: 35vh;
+  }
+  
+  .category-item-mapbox {
+    padding: 10px;
+  }
+  
+  .category-rank {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    margin-right: 10px;
+  }
+  
+  .category-name {
+    font-size: 14px;
+  }
+  
+  .category-points {
+    font-size: 14px;
+    padding: 3px 8px;
+  }
+}

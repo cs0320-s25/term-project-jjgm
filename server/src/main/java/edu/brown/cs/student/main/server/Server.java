@@ -6,22 +6,16 @@ import static spark.Spark.options;
 import edu.brown.cs.student.main.server.datasource.DefaultDataSource;
 import edu.brown.cs.student.main.server.datasource.GeoDataSource;
 import edu.brown.cs.student.main.server.datasource.cache.CacheDataSource;
-import edu.brown.cs.student.main.server.handlers.AddPinHandler;
-import edu.brown.cs.student.main.server.handlers.AddWordHandler;
-import edu.brown.cs.student.main.server.handlers.ClearPinsHandler;
-import edu.brown.cs.student.main.server.handlers.ClearUserHandler;
+import edu.brown.cs.student.main.server.handlers.GetDormPointsHandler;
 import edu.brown.cs.student.main.server.handlers.GetProfileHandler;
-import edu.brown.cs.student.main.server.handlers.ListPinsHandler;
-import edu.brown.cs.student.main.server.handlers.ListWordsHandler;
-import edu.brown.cs.student.main.server.handlers.RedLiningHandler;
+import edu.brown.cs.student.main.server.handlers.GetUserPointsHandler;
 import edu.brown.cs.student.main.server.handlers.SaveProfileHandler;
-import edu.brown.cs.student.main.server.handlers.SearchAreasHandler;
+import edu.brown.cs.student.main.server.handlers.UpdatePointsHandler;
 import edu.brown.cs.student.main.server.parser.GeoJsonObject;
 import edu.brown.cs.student.main.server.parser.JSONParser2;
 import edu.brown.cs.student.main.server.storage.FirebaseUtilities;
 import edu.brown.cs.student.main.server.storage.StorageInterface;
 import java.io.IOException;
-import java.nio.file.Paths;
 import spark.Spark;
 
 /** Top Level class for our project, utilizes spark to create and maintain our server. */
@@ -53,18 +47,13 @@ public class Server {
 
       Spark.post("get-profile", new GetProfileHandler(firebaseUtils));
       Spark.post("save-profile", new SaveProfileHandler(firebaseUtils));
-      Spark.get("add-pin", new AddPinHandler(firebaseUtils));
-      Spark.get("list-pins", new ListPinsHandler(firebaseUtils));
-      Spark.get("clear-pins", new ClearPinsHandler(firebaseUtils));
 
-      Spark.get("add-word", new AddWordHandler(firebaseUtils));
-      Spark.get("list-words", new ListWordsHandler(firebaseUtils));
-      Spark.get("clear-user", new ClearUserHandler(firebaseUtils));
+      // New endpoints for points system
+      Spark.post("update-points", new UpdatePointsHandler(firebaseUtils));
+      Spark.post("get-user-points", new GetUserPointsHandler(firebaseUtils));
+      Spark.post("get-dorm-points", new GetDormPointsHandler(firebaseUtils));
 
       String workingDirectory = System.getProperty("user.dir");
-      String geoJsonPath =
-          Paths.get(workingDirectory, "src", "main", "resources", "fullDownload.json").toString();
-      Spark.get("search-areas", new SearchAreasHandler(geoJsonPath));
 
       Spark.notFound(
           (request, response) -> {
@@ -79,8 +68,6 @@ public class Server {
 
       GeoDataSource defaulDataSource = new DefaultDataSource(geoData);
       GeoDataSource cacheDataSource = new CacheDataSource(defaulDataSource, 10);
-
-      Spark.get("/redlining", new RedLiningHandler(cacheDataSource));
 
       Spark.init();
       Spark.awaitInitialization();

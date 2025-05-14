@@ -1,9 +1,10 @@
 package edu.brown.cs.student.main.server.storage;
 
-import com.google.api.core.ApiFuture;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
@@ -14,7 +15,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -22,17 +25,11 @@ import java.util.concurrent.ExecutionException;
 public class FirebaseUtilities implements StorageInterface {
 
   public FirebaseUtilities() throws IOException {
-    // TODO: FIRESTORE PART 0:
-    // Create /resources/ folder with firebase_config.json and
-    // add your admin SDK from Firebase. see:
-    // https://docs.google.com/document/d/10HuDtBWjkUoCaVj_A53IFm5torB_ws06fW3KYFZqKjc/edit?usp=sharing
     String workingDirectory = System.getProperty("user.dir");
     System.out.println("Working directory: " + workingDirectory);
     Path firebaseConfigPath =
         Paths.get(workingDirectory, "src", "main", "resources", "firebase_config.json");
     System.out.println("Looking for firebase_config.json at: " + firebaseConfigPath.toString());
-    // ^-- if your /resources/firebase_config.json exists but is not found,
-    // try printing workingDirectory and messing around with this path.
 
     FileInputStream serviceAccount = new FileInputStream(firebaseConfigPath.toString());
 
@@ -54,15 +51,15 @@ public class FirebaseUtilities implements StorageInterface {
     }
 
     // gets all documents in the collection 'collection_id' for user 'uid'
-
     Firestore db = FirestoreClient.getFirestore();
-    // 1: Make the data payload to add to your collection
+
+    // Make the data payload to add to your collection
     CollectionReference dataRef = db.collection("users").document(uid).collection(collection_id);
 
-    // 2: Get pin documents
+    // Get documents
     QuerySnapshot dataQuery = dataRef.get().get();
 
-    // 3: Get data from document queries
+    // Get data from document queries
     List<Map<String, Object>> data = new ArrayList<>();
     for (QueryDocumentSnapshot doc : dataQuery.getDocuments()) {
       data.add(doc.getData());
@@ -78,123 +75,216 @@ public class FirebaseUtilities implements StorageInterface {
       throw new IllegalArgumentException(
           "addDocument: uid, collection_id, doc_id, or data cannot be null");
     }
-    // adds a new document 'doc_name' to colleciton 'collection_id' for user 'uid'
-    // with data payload 'data'.
 
-    // TODO: FIRESTORE PART 1:
-    // use the guide below to implement this handler
-    // - https://firebase.google.com/docs/firestore/quickstart#add_data
-
+    // adds a new document to collection for user with data payload
     Firestore db = FirestoreClient.getFirestore();
-    // 1: Get a ref to the collection that you created
-
     db.collection("users").document(uid).collection(collection_id).document(doc_id).set(data);
-    // 2: Write data to the collection ref
   }
 
-  // clears the collections inside of a specific user.
+  // --------- Points System Implementation ---------
+
   @Override
-  public void clearUser(String uid) throws IllegalArgumentException {
-    if (uid == null) {
-      throw new IllegalArgumentException("removeUser: uid cannot be null");
+  public void updateUserPoints(String userId, String genre, int pointsToAdd)
+      throws InterruptedException, ExecutionException {
+    if (userId == null || genre == null) {
+      throw new IllegalArgumentException("updateUserPoints: userId and genre cannot be null");
     }
-    try {
-      // removes all data for user 'uid'
-      Firestore db = FirestoreClient.getFirestore();
-      // 1: Get a ref to the user document
-      DocumentReference userDoc = db.collection("users").document(uid);
-      // 2: Delete the user document
-      deleteDocument(userDoc);
-    } catch (Exception e) {
-      System.err.println("Error removing user : " + uid);
-      System.err.println(e.getMessage());
+
+    Firestore db = FirestoreClient.getFirestore();
+    DocumentReference pointsDocRef =
+        db.collection("users").document(userId).collection("points").document("genrePoints");
+
+    // -- first get user's profile to determine dorm
+    DocumentReference profileDocRef =
+        db.collection("users").document(userId).collection("profile").document(userId);
+    DocumentSnapshot profileDoc = profileDocRef.get().get();
+
+    String dorm = null;
+    if (profileDoc.exists() && profileDoc.contains("dorm")) {
+      dorm = profileDoc.getString("dorm");
+    }
+
+    // -- get current points document if it exists
+    DocumentSnapshot pointsDoc = pointsDocRef.get().get();
+
+    if (pointsDoc.exists()) {
+      // -- update existing points document
+      Map<String, Object> updates = new HashMap<>();
+      updates.put(genre, FieldValue.increment(pointsToAdd));
+      pointsDocRef.update(updates);
+
+      System.out.println(
+          "Updated user " + userId + " points for genre " + genre + " by adding " + pointsToAdd);
+    } else {
+      // -- create new points document
+      Map<String, Object> points = new HashMap<>();
+      points.put(genre, pointsToAdd);
+      pointsDocRef.set(points);
+
+      System.out.println(
+          "Created new points record for user "
+              + userId
+              + " with "
+              + pointsToAdd
+              + " points in "
+              + genre);
+    }
+
+    // -- ff dorm info is available, update dorm points too
+    if (dorm != null && !dorm.isEmpty()) {
+      updateDormPoints(dorm, genre, pointsToAdd);
     }
   }
 
-  private void deleteDocument(DocumentReference doc) {
-    // for each subcollection, run deleteCollection()
-    Iterable<CollectionReference> collections = doc.listCollections();
-    for (CollectionReference collection : collections) {
-      deleteCollection(collection);
+  @Override
+  public Map<String, Integer> getUserPoints(String userId)
+      throws InterruptedException, ExecutionException {
+    if (userId == null) {
+      throw new IllegalArgumentException("getUserPoints: userId cannot be null");
     }
-    // then delete the document
-    doc.delete();
-  }
 
-  // recursively removes all the documents and collections inside a collection
-  // https://firebase.google.com/docs/firestore/manage-data/delete-data#collections
-  private void deleteCollection(CollectionReference collection) {
-    try {
+    Firestore db = FirestoreClient.getFirestore();
+    DocumentReference pointsDocRef =
+        db.collection("users").document(userId).collection("points").document("genrePoints");
 
-      // get all documents in the collection
-      ApiFuture<QuerySnapshot> future = collection.get();
-      List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+    // -- get the points document
+    DocumentSnapshot pointsDoc = pointsDocRef.get().get();
 
-      // delete each document
-      for (QueryDocumentSnapshot doc : documents) {
-        doc.getReference().delete();
+    Map<String, Integer> result = new HashMap<>();
+    if (pointsDoc.exists()) {
+      // -- Long values to Integer
+      Map<String, Object> data = pointsDoc.getData();
+      for (Map.Entry<String, Object> entry : data.entrySet()) {
+        if (entry.getValue() instanceof Long) {
+          result.put(entry.getKey(), ((Long) entry.getValue()).intValue());
+        } else if (entry.getValue() instanceof Integer) {
+          result.put(entry.getKey(), (Integer) entry.getValue());
+        }
       }
-
-      // NOTE: the query to documents may be arbitrarily large. A more robust
-      // solution would involve batching the collection.get() call.
-    } catch (Exception e) {
-      System.err.println("Error deleting collection : " + e.getMessage());
-    }
-  }
-
-  // -- User Story 3 5.2 Methods --\\
-  @Override
-  public void addPin(String uid, String pinId, Map<String, Object> pinData) {
-    if (uid == null || pinId == null || pinData == null) {
-      throw new IllegalArgumentException("addPin: uid, pinId, or pinData cannot be null");
     }
 
-    System.out.println("Storing pin with ID: " + pinId + " for user: " + uid);
-
-    Firestore db = FirestoreClient.getFirestore();
-    // Store pins at top level collection instead of nested
-    db.collection("pins").document(pinId).set(pinData);
+    return result;
   }
 
   @Override
-  public List<Map<String, Object>> getAllPins() throws InterruptedException, ExecutionException {
+  public void updateDormPoints(String dorm, String genre, int pointsToAdd)
+      throws InterruptedException, ExecutionException {
+    if (dorm == null || genre == null) {
+      throw new IllegalArgumentException("updateDormPoints: dorm and genre cannot be null");
+    }
 
     Firestore db = FirestoreClient.getFirestore();
-    List<Map<String, Object>> allPins = new ArrayList<>();
+    DocumentReference dormDocRef = db.collection("dorms").document(dorm);
 
-    // Get pins from top-level collection
-    CollectionReference pinsRef = db.collection("pins");
-    QuerySnapshot pinsQuery = pinsRef.get().get();
+    // -- get current dorm document if it exists
+    DocumentSnapshot dormDoc = dormDocRef.get().get();
 
-    System.out.println("Found " + pinsQuery.size() + " pins total");
+    if (dormDoc.exists()) {
+      // -- update existing dorm document
+      Map<String, Object> updates = new HashMap<>();
+      updates.put(genre, FieldValue.increment(pointsToAdd));
+      dormDocRef.update(updates);
 
-    for (QueryDocumentSnapshot pinDoc : pinsQuery.getDocuments()) {
-      Map<String, Object> pinData = pinDoc.getData();
-      // Ensure ID is included
-      if (!pinData.containsKey("id")) {
-        pinData.put("id", pinDoc.getId());
+      System.out.println(
+          "Updated dorm " + dorm + " points for genre " + genre + " by adding " + pointsToAdd);
+    } else {
+      // -- create new dorm document
+      Map<String, Object> points = new HashMap<>();
+      points.put(genre, pointsToAdd);
+      dormDocRef.set(points);
+
+      System.out.println(
+          "Created new points record for dorm "
+              + dorm
+              + " with "
+              + pointsToAdd
+              + " points in "
+              + genre);
+    }
+  }
+
+  @Override
+  public Map<String, Integer> getDormPoints(String dorm)
+      throws InterruptedException, ExecutionException {
+    if (dorm == null) {
+      throw new IllegalArgumentException("getDormPoints: dorm cannot be null");
+    }
+
+    Firestore db = FirestoreClient.getFirestore();
+    DocumentReference dormDocRef = db.collection("dorms").document(dorm);
+
+    // -- get the dorm document
+    DocumentSnapshot dormDoc = dormDocRef.get().get();
+
+    Map<String, Integer> result = new HashMap<>();
+    if (dormDoc.exists()) {
+      Map<String, Object> data = dormDoc.getData();
+      for (Map.Entry<String, Object> entry : data.entrySet()) {
+        if (entry.getValue() instanceof Long) {
+          result.put(entry.getKey(), ((Long) entry.getValue()).intValue());
+        } else if (entry.getValue() instanceof Integer) {
+          result.put(entry.getKey(), (Integer) entry.getValue());
+        }
       }
-      allPins.add(pinData);
     }
 
-    return allPins;
+    return result;
   }
 
   @Override
-  public void clearUserPins(String uid) throws InterruptedException, ExecutionException {
-
-    if (uid == null) {
-      throw new IllegalArgumentException("clearUserPins: uid cannot be null");
+  public void recordGamePlayed(String userId) throws InterruptedException, ExecutionException {
+    if (userId == null) {
+      throw new IllegalArgumentException("recordGamePlayed: userId cannot be null");
     }
 
     Firestore db = FirestoreClient.getFirestore();
-    // Query pins with matching userId from top-level collection
-    QuerySnapshot pinsQuery = db.collection("pins").whereEqualTo("userId", uid).get().get();
+    String today = LocalDate.now().toString(); // Format: YYYY-MM-DD
 
-    System.out.println("Clearing " + pinsQuery.size() + " pins for user: " + uid);
+    DocumentReference dailyGamesRef =
+        db.collection("users").document(userId).collection("dailyGames").document(today);
 
-    for (QueryDocumentSnapshot doc : pinsQuery.getDocuments()) {
-      doc.getReference().delete();
+    // -- get current count if it exists
+    DocumentSnapshot dailyGamesDoc = dailyGamesRef.get().get();
+
+    if (dailyGamesDoc.exists()) {
+      // -- update existing counter
+      Long count = dailyGamesDoc.getLong("count");
+      if (count == null) {
+        count = 0L;
+      }
+      dailyGamesRef.update("count", count + 1);
+
+      System.out.println("User " + userId + " has now played " + (count + 1) + " games today");
+    } else {
+      // -- create new counter
+      Map<String, Object> data = new HashMap<>();
+      data.put("count", 1);
+      dailyGamesRef.set(data);
+
+      System.out.println("User " + userId + " played their first game today");
     }
+  }
+
+  @Override
+  public int getGamesPlayedToday(String userId) throws InterruptedException, ExecutionException {
+    if (userId == null) {
+      throw new IllegalArgumentException("getGamesPlayedToday: userId cannot be null");
+    }
+
+    Firestore db = FirestoreClient.getFirestore();
+    String today = LocalDate.now().toString(); // Format: YYYY-MM-DD
+
+    DocumentReference dailyGamesRef =
+        db.collection("users").document(userId).collection("dailyGames").document(today);
+
+    // -- get current count if it exists
+    DocumentSnapshot dailyGamesDoc = dailyGamesRef.get().get();
+
+    if (dailyGamesDoc.exists() && dailyGamesDoc.contains("count")) {
+      Long count = dailyGamesDoc.getLong("count");
+      return count != null ? count.intValue() : 0;
+    }
+
+    return 0; // -- no games played today
   }
 }

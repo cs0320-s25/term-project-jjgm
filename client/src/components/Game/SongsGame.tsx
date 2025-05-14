@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-// import { guessSong, clearUser, getSong } from "../utils/api";
 import { useUser } from "@clerk/clerk-react";
 import { Section } from "../BeatmapSections"; // make sure you import the enum
 import { useSongGameLogic } from "./SongsGameLogic";
+import { getUserPoints, getDormPoints } from "../../utils/api";
 
 export default function SongsGame({
   genre,
@@ -25,41 +25,103 @@ export default function SongsGame({
     score,
     attempts,
     hasPlayed,
+    gamesPlayedToday,
     audioRef,
   } = useSongGameLogic(genre);
 
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userPoints, setUserPoints] = useState<Record<string, number>>({});
+  const [dormPoints, setDormPoints] = useState<Record<string, number>>({});
+  const { user } = useUser();
+
   const maxAttempts = 5;
   const maxRounds = 5;
-  const scoreByAttempt = [100, 80, 60, 40, 20];
+  const maxGamesPerDay = 5;
 
-  //  will be useful later for user tracking
-  // if (!user) {
-  //   return <div>Loading...</div>;
-  // }
+  // Fetch user profile, points, and dorm points
+  useEffect(() => {
+    if (!user) return;
 
-  // const USER_ID = user.id;
-
-  // useEffect(() => {
-  // }, [USER_ID]);
+    const fetchUserData = async () => {
+      try {
+        // Get user profile from localStorage (since we already have it from login)
+        const profileJson = localStorage.getItem(`userProfile_${user.id}`);
+        if (profileJson) {
+          const profile = JSON.parse(profileJson);
+          setUserProfile(profile);
+          
+          // Fetch user points
+          const pointsResult = await getUserPoints(user.id);
+          if (pointsResult && pointsResult.response_type === "success") {
+            setUserPoints(pointsResult.points || {});
+          }
+          
+          // Fetch dorm points if profile has a dorm
+          if (profile && profile.dorm) {
+            const dormResult = await getDormPoints(profile.dorm);
+            if (dormResult && dormResult.response_type === "success") {
+              setDormPoints(dormResult.points || {});
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    
+    fetchUserData();
+  }, [user]);
 
   if (gameOver) {
+    const userNickname = userProfile?.nickname || "Player";
+    const userDorm = userProfile?.dorm || "your dorm";
+    const totalGenrePoints = userPoints[genre] || 0;
+    const dormGenrePoints = dormPoints[genre] || 0;
+    
     return (
       <div className="game-over">
         <h2>🎉 Game Complete!</h2>
         <p>
-          <strong>Your Final Score:</strong> {score} out of {maxRounds * 100}
+          <strong>Your Score:</strong> {score} out of {maxRounds * 100}
         </p>
         <p>
-          <strong>Congrats (player name)!</strong>
+          <strong>Congrats {userNickname}!</strong>
         </p>
         <p>
           <strong>
-            You earned {score} {genre} points for (dorm name) today.
+            You earned {score} {genre} points for {userDorm} today.
           </strong>
         </p>
         <p>
-          <strong>Make sure to come back tomorrow!</strong>
+          <strong>Your total {genre} points: {totalGenrePoints}</strong>
         </p>
+        <p>
+          <strong>{userDorm}'s total {genre} points: {dormGenrePoints}</strong>
+        </p>
+        
+        {gamesPlayedToday !== null && (
+          <p>
+            <strong>
+              Games played today: {gamesPlayedToday} / {maxGamesPerDay}
+            </strong>
+            {gamesPlayedToday >= maxGamesPerDay ? (
+              <span> (Daily limit reached)</span>
+            ) : (
+              <span> (You can play {maxGamesPerDay - gamesPlayedToday} more games today)</span>
+            )}
+          </p>
+        )}
+        
+        <div className="game-over-buttons">
+          {gamesPlayedToday !== null && gamesPlayedToday < maxGamesPerDay && (
+            <button onClick={() => setSection(Section.GENRE_SELECT)}>
+              Play Again
+            </button>
+          )}
+          <button onClick={() => setSection(Section.MAP_DEMO)}>
+            Go to BeatMap
+          </button>
+        </div>
       </div>
     );
   }
@@ -67,6 +129,15 @@ export default function SongsGame({
   return (
     <div className="songs-game">
       <h2>Guess Songs</h2>
+      
+      {gamesPlayedToday !== null && (
+        <div className="games-played-info">
+          <p>
+            <strong>Games played today:</strong> {gamesPlayedToday} / {maxGamesPerDay}
+          </p>
+        </div>
+      )}
+      
       <label htmlFor="new-word">Enter Song Name:</label>
       <input
         aria-label="song-name-input"
@@ -133,15 +204,28 @@ export default function SongsGame({
         <strong>Attempts:</strong> {attempts} / {maxAttempts}
       </p>
       <p>
+        <strong>Category:</strong> {genre}
+      </p>
+      
+      {/* Display user's total points for this genre */}
+      {userPoints && userPoints[genre] !== undefined && (
+        <p>
+          <strong>Your total {genre} points:</strong> {userPoints[genre]}
+        </p>
+      )}
+      
+      {/* Display user's dorm's total points for this genre */}
+      {userProfile && userProfile.dorm && dormPoints && dormPoints[genre] !== undefined && (
+        <p>
+          <strong>{userProfile.dorm}'s total {genre} points:</strong> {dormPoints[genre]}
+        </p>
+      )}
+      
+      {/* For debugging only, remove before deployment */}
+      {/* <p>
         <strong>Now playing:</strong> {currentTrack?.title} by{" "}
         {currentTrack?.artist}
-      </p>
-      <p>
-        <i aria-label="user-header">
-          <strong>Category: {genre}</strong>
-        </i>
-      </p>
+      </p> */}
     </div>
-    // remove "Now Playing:" when all bugs are sorted
   );
 }

@@ -11,11 +11,19 @@ public interface StorageInterface {
   List<Map<String, Object>> getCollection(String uid, String collection_id)
       throws InterruptedException, ExecutionException;
 
-  void clearUser(String uid) throws InterruptedException, ExecutionException;
+  // -- METHODS FOR POINTS SYSTEM
 
-  void addPin(String uid, String pinId, Map<String, Object> pinData);
+  void updateUserPoints(String userId, String genre, int pointsToAdd)
+      throws InterruptedException, ExecutionException;
 
-  List<Map<String, Object>> getAllPins() throws InterruptedException, ExecutionException;
+  Map<String, Integer> getUserPoints(String userId) throws InterruptedException, ExecutionException;
 
-  void clearUserPins(String uid) throws InterruptedException, ExecutionException;
+  void updateDormPoints(String dorm, String genre, int pointsToAdd)
+      throws InterruptedException, ExecutionException;
+
+  Map<String, Integer> getDormPoints(String dorm) throws InterruptedException, ExecutionException;
+
+  void recordGamePlayed(String userId) throws InterruptedException, ExecutionException;
+
+  int getGamesPlayedToday(String userId) throws InterruptedException, ExecutionException;
 }

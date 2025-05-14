@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from "react";
+import { useUser } from "@clerk/clerk-react";
+import { updatePoints, getUserPoints } from "../../utils/api";
 import pop from "../../catalog/pop.json";
 import rnb from "../../catalog/rnb.json";
 import afrobeats from "../../catalog/afrobeats.json";
 import hiphop from "../../catalog/hiphop.json";
 import country from "../../catalog/country.json";
-
 
 const genreMap: Record<string, any[]> = {
   pop,
@@ -13,8 +14,6 @@ const genreMap: Record<string, any[]> = {
   hiphop,
   country,
 };
-
-
 
 export function useSongGameLogic(genre: string) {
   // states
@@ -29,16 +28,16 @@ export function useSongGameLogic(genre: string) {
   const [gameOver, setGameOver] = useState(false);
   const [playedTrackIds, setPlayedTrackIds] = useState<number[]>([]);
   const [hasPlayed, setHasPlayed] = useState(false);
+  const [gamesPlayedToday, setGamesPlayedToday] = useState<number | null>(null);
+  const [pointSaved, setPointSaved] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { user } = useUser();
 
   const maxAttempts = 5;
   const maxRounds = 5;
   const scoreByAttempt = [100, 80, 60, 40, 20];
 
-  // fetchPreviewUrl, playPreviewWithLimit, nextRound, handleSubmit
-  // ...copy those in here (they stay the same)
-
-// find the trackID of the current track
+  // find the trackID of the current track
   const fetchPreviewUrl = async (trackID: number): Promise<string | null> => {
     try {
       const res = await fetch(`http://localhost:3232/api/track/${trackID}`);
@@ -110,7 +109,6 @@ export function useSongGameLogic(genre: string) {
     setHasPlayed(true);
   };
 
-
   // Guess submission logic
   const handleSubmit = async () => {
     // Stop any audio that might be playing
@@ -156,8 +154,47 @@ export function useSongGameLogic(genre: string) {
         playPreviewWithLimit(currentTrack.trackID, duration);
       }
     }
-  }; 
+  };
 
+  // -- SAVE GAINED POINTS TO FIREBASE, UPDATE GAMES PLAYED
+  useEffect(() => {
+    const savePoints = async () => {
+      if (roundComplete && !pointSaved && user && score > 0) {
+        try {
+          console.log(`Saving ${score} points for user ${user.id} in genre ${genre}`);
+          const result = await updatePoints(user.id, genre, score);
+          console.log("Points saved:", result);
+          setPointSaved(true);
+          
+          if (result && result.games_played_today) {
+            setGamesPlayedToday(result.games_played_today);
+          }
+        } catch (error) {
+          console.error("Error saving points:", error);
+        }
+      }
+    };
+    
+    savePoints();
+  }, [pointSaved, user, score, genre]);
+
+  // -- FETCH # GAMES PLAYED TODAY
+  useEffect(() => {
+    const fetchGamesPlayedToday = async () => {
+      if (user) {
+        try {
+          const result = await getUserPoints(user.id);
+          if (result && result.response_type === "success") {
+            setGamesPlayedToday(result.games_played_today || 0);
+          }
+        } catch (error) {
+          console.error("Error fetching games played:", error);
+        }
+      }
+    };
+    
+    fetchGamesPlayedToday();
+  }, [user]);
 
   useEffect(() => {
     const allTracks = genreMap[genre];
@@ -174,6 +211,7 @@ export function useSongGameLogic(genre: string) {
     setInput("");
     setFeedback("");
     setHasPlayed(false);
+    setPointSaved(false);
   }, [genre]);
   
   useEffect(() => {
@@ -198,6 +236,7 @@ export function useSongGameLogic(genre: string) {
     roundComplete,
     gameOver,
     hasPlayed,
+    gamesPlayedToday,
     // setters if needed
     setInput,
     // logic

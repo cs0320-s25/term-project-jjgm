@@ -11,7 +11,7 @@ import {
 } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
 import TermsAndProfile from "./TermsAndProfile";
-import { getUserProfile } from "../utils/api";
+import { getUserPoints, getUserProfile } from "../utils/api";
 
 // Firebase config
 const firebaseConfig = {
@@ -30,40 +30,60 @@ function App() {
   const [hasProfile, setHasProfile] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [nickname, setNickname] = useState<string | null>(null);
+  const [userPointsInfo, setUserPointsInfo] = useState<any>(null);
 
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
 
- useEffect(() => {
-   const fetchUserProfile = async () => {
-  if (!user) return;
+      try {
+        const profile = await getUserProfile(user.id);
+        console.log("Fetched profile:", profile);
 
-  try {
-    const profile = await getUserProfile(user.id);
-    console.log("Fetched profile:", profile);
-
-    // Check both existence and non-empty values
-    if (
-      profile &&
-      typeof profile.nickname === "string" &&
-      profile.nickname.trim() !== "" &&
-      typeof profile.dorm === "string" &&
-      profile.dorm.trim() !== ""
-    ) {
-      setHasProfile(true);
-      setNickname(profile.nickname);
-    } else {
-      setHasProfile(false);
-    }
-  } catch (error) {
-    console.error("Failed to fetch profile:", error);
-    setHasProfile(false);
-  } finally {
-    setProfileLoaded(true);
-  }
-};
+        // Check both existence and non-empty values
+        if (
+          profile &&
+          typeof profile.nickname === "string" &&
+          profile.nickname.trim() !== "" &&
+          typeof profile.dorm === "string" &&
+          profile.dorm.trim() !== ""
+        ) {
+          setHasProfile(true);
+          setNickname(profile.nickname);
+          
+          // Store profile in localStorage for easy access in other components
+          localStorage.setItem(`userProfile_${user.id}`, JSON.stringify(profile));
+        } else {
+          setHasProfile(false);
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+        setHasProfile(false);
+      } finally {
+        setProfileLoaded(true);
+      }
+    };
+    
     fetchUserProfile();
-  }
-  , [user]);
-
+  }, [user]);
+  
+  // Fetch user points info (including games played today)
+  useEffect(() => {
+    const fetchUserPoints = async () => {
+      if (!user || !hasProfile) return;
+      
+      try {
+        const pointsInfo = await getUserPoints(user.id);
+        if (pointsInfo && pointsInfo.response_type === "success") {
+          setUserPointsInfo(pointsInfo);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user points:", error);
+      }
+    };
+    
+    fetchUserPoints();
+  }, [user, hasProfile]);
 
   return (
     <div className="App">
@@ -87,7 +107,16 @@ function App() {
           // Show main app
           <div className="main-page">
             <div className="nickname-banner">
-              {nickname ? `Welcome, ${nickname}!` : ""}
+              {nickname ? (
+                <div>
+                  <span>Welcome, {nickname}!</span>
+                  {userPointsInfo && userPointsInfo.games_remaining_today !== undefined && (
+                    <span className="games-remaining">
+                      Games remaining today: {userPointsInfo.games_remaining_today}
+                    </span>
+                  )}
+                </div>
+              ) : ""}
             </div>
             <div
               style={{

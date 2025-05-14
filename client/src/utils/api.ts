@@ -19,73 +19,67 @@ async function queryAPI(
   return response.json();
 }
 
-export async function addPin(uid: string, pinId: string, lat: number, lng: number, timestamp: number) {
-  console.log("calling add-pin API with:", { uid, id: pinId, lat, lng, timestamp });
-  return await queryAPI("add-pin", {
-    uid: uid,
-    id: pinId,
-    lat: lat.toString(),
-    lng: lng.toString(),
-    timestamp: timestamp.toString()
+
+// -- POINTS HANDLERS
+
+export async function updatePoints(uid: string, genre: string, points: number) {
+  const response = await fetch(`${HOST}/update-points`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      userId: uid,
+      genre: genre,
+      points: points,
+    }),
   });
+
+  if (!response.ok) {
+    throw new Error(`Failed to update points: ${response.statusText}`);
+  }
+
+  return await response.json();
 }
 
-export async function listPins() {
-  console.log("Calling list-pins API");
-  return await queryAPI("list-pins", {});
-}
 
-export async function clearUserPins(uid: string) {
-  console.log("Calling clear-pins API with uid:", uid);
-  return await queryAPI("clear-pins", {
-    uid: uid
+export async function getUserPoints(uid: string) {
+  const response = await fetch(`${HOST}/get-user-points`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      userId: uid,
+    }),
   });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get user points: ${response.statusText}`);
+  }
+
+  return await response.json();
 }
 
-export async function searchAreas(keyword: string) {
-  return await queryAPI("search-areas", {
-    keyword: keyword
+
+export async function getDormPoints(dorm: string) {
+  const response = await fetch(`${HOST}/get-dorm-points`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      dorm: dorm,
+    }),
   });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get dorm points: ${response.statusText}`);
+  }
+
+  return await response.json();
 }
 
-export async function addWord(uid: string, word: string) {
-  return await queryAPI("add-word", {
-    uid: uid,
-    word: word,
-  });
-}
-
-export async function getWords(uid: string) {
-  return await queryAPI("list-words", {
-    uid: uid,
-  });
-}
-
-export async function clearUser(uid: string) {
-  return await queryAPI("clear-user", {
-    uid: uid,
-  });
-}
-
-// export async function saveUserProfile(uid: string, profile: { nickname: string; dorm: string }) {
-//   return await queryAPI("save-profile", {
-//     uid: uid,
-//     nickname: profile.nickname,
-//     dorm: profile.dorm,
-//   });
-// }
-
-
-
-// export async function getUserProfile(uid: string) {
-//   const result = await queryAPI("get-profile", {
-//     uid,
-//   });
-//   if (result.response_type === "success") {
-//     return result.profile;
-//   }
-//   return null;
-// }
 
 
 export async function saveUserProfile(

@@ -9,7 +9,8 @@ import Map, {
 } from "react-map-gl";
 import { geoLayer, overlayData } from "../utils/overlay";
 import { useUser } from "@clerk/clerk-react";
-import { addPin, listPins, clearUserPins, searchAreas } from "../utils/api";
+import { getUserPoints } from "../utils/api";
+import "../styles/MapStyles.css";
 
 const MAPBOX_API_KEY = process.env.MAPBOX_TOKEN;
 if (!MAPBOX_API_KEY) {
@@ -26,6 +27,12 @@ export interface PinData {
   location: LatLong;
   userId: string;
   timestamp: number;
+}
+
+// Define interface for top categories
+interface TopCategory {
+  genre: string;
+  points: number;
 }
 
 const ProvidenceLatLong: LatLong = {
@@ -45,7 +52,6 @@ export default function Mapbox() {
     undefined
   );
   
-  const [pins, setPins] = useState<PinData[]>([]);
   const [searchKeyword, setSearchKeyword] = useState<string>("");
   const [matchingAreaIds, setMatchingAreaIds] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -55,192 +61,88 @@ export default function Mapbox() {
   const [minLon, setMinLon] = useState<string>("");
   const [maxLon, setMaxLon] = useState<string>("");
   
+  // State for top categories
+  const [topCategories, setTopCategories] = useState<TopCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  
   const { user } = useUser();
 
   useEffect(() => {
     setOverlay(overlayData());
-    refreshPins();
     
-    // periodically refresh pins
-    const interval = setInterval(refreshPins, 5000);
-    
-    return () => clearInterval(interval);
-  }, []);
+    // Fetch user's top categories if user exists
+    const fetchTopCategories = async () => {
+      if (user) {
+        setLoading(true);
+        try {
+          const result = await getUserPoints(user.id);
+          if (result && result.response_type === "success" && result.points) {
+            // Convert points object to array, sort by points, and take top 3
+            const categories = Object.entries(result.points)
+              .map(([genre, points]) => ({
+                genre,
+                points: points as number
+              }))
+              .filter(category => category.points > 0) // Only include non-zero scores
+              .sort((a, b) => b.points - a.points)
+              .slice(0, 3); // Get top 3
 
-  const fetchOverlay = async () => {
-
-    if (!minLat || !maxLat || !minLon || !maxLon) {
-      setOverlay(undefined);
-      return;
-    }
-
-    const params = new URLSearchParams({
-      minLat: minLat,
-      maxLat: maxLat,
-      minLon: minLon,
-      maxLon: maxLon,
-    });
-    try {
-      const response = await fetch(
-        `http://localhost:3232/redlining?${params.toString()}`
-      );
-      if (!response.ok) {
-        console.error("Error fetching redlining overlay:", response.statusText);
-        return;
-      }
-      const data = await response.json();
-      console.log("Fetched redlining overlay:", data);
-      setOverlay(data);
-    } catch (error) {
-      console.error("Error in fetchOverlay:", error);
-    }
-  };
-
-
-  const refreshPins = () => {
-    listPins()
-      .then((data) => {
-        console.log("API response:", data);
-        
-        if (data && data.response_type === "success" && Array.isArray(data.pins)) {
-          // -- convert pins from the API to the PinData format
-          const convertedPins: PinData[] = data.pins.map((pin: any) => {
-            return {
-              id: pin.id || `pin-${Date.now()}`,
-              location: {
-                lat: Number(pin.lat),
-                long: Number(pin.lng)
-              },
-              userId: pin.userId || "unknown",
-              timestamp: Number(pin.timestamp) || Date.now()
-            };
-          });
-          
-          console.log("Converted pins for display:", convertedPins);
-          setPins(convertedPins);
-        } else {
-          console.log("No pins found or invalid response format:", data);
-          setPins([]);
+            setTopCategories(categories);
+          }
+        } catch (error) {
+          console.error("Error fetching user points:", error);
+        } finally {
+          setLoading(false);
         }
-      })
-      .catch((error) => {
-        console.error("Error fetching pins:", error);
-        setPins([]);
-      });
-  };
-
-  const handleMapClick = (e: MapLayerMouseEvent) => {
-    if (!user) return;
-    
-    const newPin: PinData = {
-      id: `pin-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      location: {
-        lat: e.lngLat.lat,
-        long: e.lngLat.lng,
-      },
-      userId: user.id,
-      timestamp: Date.now(),
+      } else {
+        setLoading(false);
+      }
     };
     
-    // Add the pin to the API
-    addPin(
-      user.id,
-      newPin.id,
-      newPin.location.lat,
-      newPin.location.long,
-      newPin.timestamp
-    )
-      .then(() => {
-        // Add a small delay to ensure Firebase has time to commit the data
-        setTimeout(refreshPins, 500);
-      })
-      .catch((error) => {
-        console.error("Error adding pin:", error);
-      });
-  };
+    fetchTopCategories();
+  }, [user]);
 
-  const handleClearMyPins = () => {
-    if (!user) return;
+  const getCategoryLabel = (value: string): string => {
+    const genreMap: Record<string, string> = {
+      "pop": "Pop",
+      "rnb": "90s RnB",
+      "hiphop": "Hip-Hop/Rap",
+      "afrobeats": "Afrobeats",
+      "country": "Country"
+    };
     
-    clearUserPins(user.id)
-      .then(() => {
-        refreshPins();
-      })
-      .catch((error) => {
-        console.error("Error clearing pins:", error);
-      });
-  };
-  
-  const handleSearch = () => {
-    console.log("searching keywords......")
-    if (!searchKeyword) {
-      setMatchingAreaIds([]);
-      return;
-    }
-    
-    setIsSearching(true);
-    
-    searchAreas(searchKeyword)
-      .then((data) => {
-        if (data && data.response_type === "success" && data.matching_ids) {
-          // debug logging
-          console.log("Backend returned matching IDs:", data.matching_ids);
-          
-          const ids = Array.isArray(data.matching_ids) ? data.matching_ids : [];
-          console.log("Setting matched IDs:", ids);
-          
-          setMatchingAreaIds(ids);
-        } else {
-          console.log("No matching areas found:", data);
-          setMatchingAreaIds([]);
-        }
-      })
-      .catch((error) => {
-        console.error("Error searching areas:", error);
-        setMatchingAreaIds([]);
-      })
-      .finally(() => {
-        setIsSearching(false);
-      });
-  };
-  
-  const handleClearSearch = () => {
-    setSearchKeyword("");
-    setMatchingAreaIds([]);
-  };
-
-  /**
-  const highlightedLayer: any = {
-    id: "highlighted-areas",
-    type: "fill",
-    paint: {
-      "fill-color": "#FF9900",
-      "fill-opacity": 0.7,
-    },
-    filter: ["in", ["get", "holc_id"], ...matchingAreaIds]
-  };*/
-  
-  const highlightedLayer: any = {
-    id: "highlighted-areas",
-    type: "fill",
-    paint: {
-      "fill-color": "#FF9900",
-      "fill-opacity": 0.7,
-    },
-    filter: ["in", ["get", "area_id"], ["literal", matchingAreaIds]]
+    return genreMap[value] || value;
   };
 
   return (
     <div className="map-container">
-      <div className="map-controls">
-        <button
-          onClick={handleClearMyPins}
-          aria-label="clear-pins-button"
-          className="clear-pins-button"
-        >
-          Clear My Pins
-        </button>
-      </div>
+      {/* Top Categories Display */}
+      {!loading && (
+        <div className="top-categories-mapbox">
+          <h3>Your Top {topCategories.length === 1 ? "Category" : "Categories"}</h3>
+          {topCategories.length > 0 ? (
+            <div className="categories-list-mapbox">
+              {topCategories.map((category, index) => (
+                <div 
+                  key={category.genre} 
+                  className={`category-item-mapbox rank-${index + 1}`}
+                  data-category={category.genre}
+                >
+                  <div className="category-rank">{index + 1}</div>
+                  <div className="category-info">
+                    <div className="category-name">{getCategoryLabel(category.genre)}</div>
+                    <div className="category-points">{category.points}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="no-categories">
+              Play some music games to earn points!
+            </div>
+          )}
+        </div>
+      )}
   
       <Map
         mapboxAccessToken={MAPBOX_API_KEY}
@@ -248,7 +150,6 @@ export default function Mapbox() {
         style={{ width: "100%", height: "600px" }}
         mapStyle="mapbox://styles/mapbox/streets-v12"
         onMove={(ev: ViewStateChangeEvent) => setViewState(ev.viewState)}
-        onClick={handleMapClick}
       >
         {overlay && (
           <Source id="geo_data" type="geojson" data={overlay}>
@@ -272,27 +173,6 @@ export default function Mapbox() {
             )}
           </Source>
         )}
-  
-        {pins.map((pin) => (
-          <Marker
-            key={pin.id}
-            longitude={pin.location.long}
-            latitude={pin.location.lat}
-            anchor="bottom"
-            aria-label={`map-pin-${pin.id}`}
-          >
-            <div
-              className={`map-pin ${
-                pin.userId === user?.id ? "my-pin" : "other-pin"
-              }`}
-              title={`Pin added by ${
-                pin.userId === user?.id ? "you" : "another user"
-              }`}
-            >
-              📍
-            </div>
-          </Marker>
-        ))}
       </Map>
     </div>
   );
