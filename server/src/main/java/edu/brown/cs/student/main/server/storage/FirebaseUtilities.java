@@ -131,8 +131,13 @@ public class FirebaseUtilities implements StorageInterface {
     for (QueryDocumentSnapshot doc : profiles) {
       String uid = doc.getReference().getParent().getParent().getId();
       String dorm = doc.getString("dorm");
+      System.out.println(" profile dorm='" + dorm + "'");
 
       if (!dormId.equals(dorm)) continue;
+
+      // normalizing trimmed and ignore-case:
+
+      if (!dorm.trim().equalsIgnoreCase(dormId.trim())) continue;
 
       String nickname = doc.getString("nickname");
       Map<String, Integer> pointsMap = getUserPoints(uid);
