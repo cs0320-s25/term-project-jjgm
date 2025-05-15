@@ -1,4 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { clerkSetup } from "@clerk/testing/playwright";
+
+
+const FRONTEND = "http://localhost:8000";
+
 
 test.beforeEach(async ({ page }) => {
   // Go to your app’s homepage where the game starts
@@ -7,14 +12,31 @@ test.beforeEach(async ({ page }) => {
 
 
  // Clerk testing
- test("testing integration functionality", async ({ page }) => {
-  // Fill in Clerk test credentials
-  await page.getByLabel("Email address").fill("notreal@brown.edu");
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
+ test.beforeEach(async ({ page }) => {
+   // initialize Clerk testing
+   await clerkSetup({
+     frontendApiUrl: process.env.CLERK_FRONTEND_API,
+   });
 
-  // Wait for password input to show up
-  await page.getByPlaceholder("Enter your password").fill("notrealnotreal");
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
+   // load the app & open Clerk modal
+   await page.goto(FRONTEND);
+   await page.getByRole("button", { name: "Sign in", exact: true }).click();
+
+   // fill & submit
+   await page.getByPlaceholder("Email address").fill("test@test.com");
+   await page.getByPlaceholder("Password").fill("superdupertest123");
+   await page.getByRole("button", { name: "Continue", exact: true }).click();
+
+   // wait for main nav to appear
+   await page.waitForSelector(".beatmap-nav");
+   await page.waitForSelector(".genre-overlay");
+
+   // 3) Dismiss the popup by choosing a genre, e.g. POP
+   await page.getByRole("button", { name: "POP" }).click();
+   await page.waitForSelector(".genre-overlay", { state: "detached" });
+
+   // 4) Finally ensure the leaderboard is visible
+   await page.waitForSelector(".leaderboard table");
  });
 
 // test("User can see the game UI and start a round", async ({ page }) => {
