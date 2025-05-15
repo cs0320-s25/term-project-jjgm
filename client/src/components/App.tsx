@@ -14,6 +14,7 @@ import TermsPage from "./TermsPage";
 import ProfilePage from "./ProfilePage";
 import { getUserPoints, getUserProfile } from "../utils/api";
 import Leaderboard from "./Leaderboard";
+import FireAnimation from "./FireAnimation";
 
 // Firebase config
 const firebaseConfig = {
@@ -122,6 +123,8 @@ function App() {
       </SignedOut>
 
       <SignedIn>
+        {profileLoaded && <FireAnimation />}
+
         {!profileLoaded ? (
           <div className="loading">Loading...</div>
         ) : step === "terms" ? (
