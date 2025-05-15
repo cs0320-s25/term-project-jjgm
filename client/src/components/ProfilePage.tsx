@@ -20,17 +20,14 @@ export default function ProfilePage({
     "Barbour",
     "Buxton",
     "Caswell",
-    "Chapman",
     "Chen",
     "Danoff",
-    "Dinman",
     "Em-Wool",
     "Goddard",
     "Grad",
     "Harambee",
     "Harkness",
     "Hegeman",
-    "Hope",
     "Keeney",
     "Littlefield",
     "Machado",
@@ -46,7 +43,6 @@ export default function ProfilePage({
     "Slater",
     "Wayland",
     "Wellness",
-    "West",
     "Young O",
     "111 Brown St",
     "219 Bowen St",
@@ -68,39 +64,45 @@ export default function ProfilePage({
   };
 
   return (
-    <div className="profile-setup-page">
-      <h2>Set Up Your Profile</h2>
-      <input
-        type="text"
-        placeholder="Enter your Nickname"
-        value={nickname}
-        onChange={(e) => setNickname(e.target.value)}
-      />
+    <div className="profile-page-wrapper">
+      <div className="profile-card">
+        <h2>👤 Set Up Your Profile</h2>
+        <h3> If you have already created your profile click Exit</h3>
 
-      <select value={dorm} onChange={(e) => setDorm(e.target.value)}>
-        <option value="">Select your dorm</option>
-        {dormOptions.map((d) => (
-          <option key={d} value={d}>
-            {d}
-          </option>
-        ))}
-      </select>
+        <label>Nickname</label>
+        <input
+          type="text"
+          placeholder="Enter your Nickname"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+        />
 
-      <button
-        onClick={handleProfileSave}
-        disabled={!nickname || !dorm || saving}
-      >
-        {saving ? "Saving..." : "Save Profile"}
-      </button>
+        <label>Dorm</label>
+        <select value={dorm} onChange={(e) => setDorm(e.target.value)}>
+          <option value="">Select your dorm</option>
+          {dormOptions.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
 
-      {onExit && (
-        <button
-          onClick={onExit}
-          style={{ marginLeft: "1rem", background: "lightgray" }}
-        >
-          Exit
-        </button>
-      )}
+        <div className="profile-buttons">
+          <button
+            className="primary-btn"
+            onClick={handleProfileSave}
+            disabled={!nickname || !dorm || saving}
+          >
+            {saving ? "Saving..." : "Save Profile"}
+          </button>
+
+          {onExit && (
+            <button className="secondary-btn" onClick={onExit}>
+              Exit
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
