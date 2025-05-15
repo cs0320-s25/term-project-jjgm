@@ -105,3 +105,6 @@ Open link for localhost 8000
 # Collaboration
 “how to make fire float around” prompt. ChatGPT, 15 May. version, OpenAI, 15 May 2025, chat.openai.com/chat.
 - Used OpenAI to figure out how to create design of fire floating in the background and fix other designs on app
+
+“Why is my playwright test showing a .beforeEach() and .describe() error?” prompt. ChatGPT, 13 May. version, OpenAI, 13 May 2025, chat.openai.com/chat.
+- OpenAI was used to debug the SongsGame testing file testing file

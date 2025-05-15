@@ -16,6 +16,6 @@
     "noEmit": false,
     "jsx": "react-jsx"
   },
-  "include": ["src", "tests/songsGame.spec.ts"],
+  "include": ["src", "tests/e2e/songsGame.spec.ts"],
   "exclude": ["src/backend"]
 }
