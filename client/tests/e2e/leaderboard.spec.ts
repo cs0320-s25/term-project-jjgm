@@ -215,4 +215,59 @@ test.describe("Leaderboard UI persistence", () => {
     );
     expect(afterReload).toEqual(initial);
   });
+
+  test("Global UI shows ≤10 rows and is sorted desc", async ({ page }) => {
+    await page.waitForSelector(".leaderboard tbody tr");
+
+    //grab the raw text from the 4th column (Score)
+    const rawScores = await page.$$eval(
+      ".leaderboard tbody tr td:nth-child(4)",
+      (tds) => tds.map((td) => td.textContent!.trim())
+    );
+
+    //parse & sanity-check
+    const scores = rawScores.map((text) => {
+      const n = parseInt(text.replace(/[^0-9\-]/g, ""), 10);
+      expect(!isNaN(n)).toBeTruthy();
+      return n;
+    });
+
+    //cap at 10 rows
+    expect(scores.length).toBeLessThanOrEqual(10);
+
+    //descending order
+    for (let i = 0; i < scores.length - 1; i++) {
+      expect(scores[i]).toBeGreaterThanOrEqual(scores[i + 1]);
+    }
+  });
+
+  test("Dorm UI shows ≤10 rows and is sorted by contribution desc", async ({
+    page,
+  }) => {
+    //switch into Dorm view
+    await page.getByRole("button", { name: /dorm/i }).click();
+    await page.waitForSelector(".leaderboard tbody tr");
+
+    //grab the raw text from the 5th column (Contribution)
+    const rawContribs = await page.$$eval(
+      ".leaderboard tbody tr td:nth-child(5)",
+      (tds) => tds.map((td) => td.textContent!.trim())
+    );
+
+    //parse & sanity-check
+    const contribs = rawContribs.map((text) => {
+      const n = parseInt(text.replace(/[^0-9\-]/g, ""), 10);
+      expect(!isNaN(n)).toBeTruthy();
+      return n;
+    });
+
+    //cap at 10 rows
+    expect(contribs.length).toBeLessThanOrEqual(10);
+
+    //descending order
+    for (let i = 0; i < contribs.length - 1; i++) {
+      expect(contribs[i]).toBeGreaterThanOrEqual(contribs[i + 1]);
+    }
+  });
+
 });

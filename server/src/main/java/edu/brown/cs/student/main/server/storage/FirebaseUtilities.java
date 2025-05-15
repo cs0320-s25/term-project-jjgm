@@ -153,7 +153,13 @@ public class FirebaseUtilities implements StorageInterface {
     }
 
     // sort
-    filtered.sort((a, b) -> Long.compare((Long) b.get("score"), (Long) a.get("score")));
+    filtered.sort(
+        (a, b) -> {
+          int contribA = ((Number) a.get("contribution")).intValue();
+          int contribB = ((Number) b.get("contribution")).intValue();
+          return Integer.compare(contribB, contribA);
+        });
+
     List<Map<String, Object>> out = new ArrayList<>();
     for (int i = 0; i < Math.min(limit, filtered.size()); i++) {
       Map<String, Object> entry = filtered.get(i);
