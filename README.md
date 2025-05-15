@@ -51,12 +51,12 @@ future
 - **Component Structure**  
   - **`Leaderboard.tsx`** — renders the table and handles button toggle  
   - **`api.ts`** — exposes `getGlobalLeaderboard()` and `getDormLeaderboard(dormId)`  
-  - **`FirebaseUtilities.getDormLeaderboard`** — now sorts by `contribution` (Martin’s change)
+  - **`FirebaseUtilities.getDormLeaderboard`** — now sorts by `contribution` 
 
 # Errors/Bugs
 
 - **Dorm Board**
-    - UI persistence tests occasionally fail unpredictably. I'm unable to consistently replicate the issue, and my attempted fix produces inconsistent results. The situation is particularly confusing because the fix sometimes makes the failing test pass, but also causes the test to fail. I'm uncertain how to proceed given this contradictory behavior.
+    - UI persistence tests occasionally fail unpredictably. I'm unable to consistently replicate the issue, and my attempted fix produces inconsistent results. The situation is particularly confusing because the fix sometimes makes the failing test pass, but also causes the test to fail. I'm uncertain how to proceed given this contradictory behavior. (New) recent design changes broke tests for leaderboards. There was not enough time to get it back up and running before demo. One can see commit where all tests were working before design change, if need be. Should note, leaderboards are not broken themselves, but the structure of the tests no longer aligns with the design of the web app, thus majority can no longer pass.
 - **Terms and Conditions**
    - After editing the design of the app for some reason, when creating a new user the terms and conditions page did not pop up. So on sign out the terms being accepted is deleted from local storage. This makes the term page show up after every sign in but the user can still keep their username and dorm info they originally put in by just clicking exit. 
 
