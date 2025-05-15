@@ -32,7 +32,6 @@ export default function ProfilePage({
     "Hegeman",
     "Hope",
     "Keeney",
-    "King",
     "Littlefield",
     "Machado",
     "Marcy",
