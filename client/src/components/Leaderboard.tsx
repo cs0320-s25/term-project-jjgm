@@ -54,7 +54,7 @@ const Leaderboard: React.FC<Props> = ({dormId}) => {
       <div className="leaderboard-container">
         <h2 className="leaderboard-title">
           {view === "global"
-            ? "🌎 Global Leaderboard"
+            ? " Global Leaderboard"
             : `🏠 ${dormId} Dorm Leaderboard`}
         </h2>
 
