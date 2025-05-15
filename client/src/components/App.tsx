@@ -10,10 +10,12 @@ import {
   useUser,
 } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
+import { useClerk } from "@clerk/clerk-react";
 import TermsPage from "./TermsPage";
 import ProfilePage from "./ProfilePage";
 import { getUserPoints, getUserProfile } from "../utils/api";
 import Leaderboard from "./Leaderboard";
+import FireAnimation from "./FireAnimation";
 
 // Firebase config
 const firebaseConfig = {
@@ -29,13 +31,14 @@ initializeApp(firebaseConfig);
 
 function App() {
   const { user } = useUser();
+  const { signOut } = useClerk(); // 👈 useClerk hook for custom sign out
   const [hasProfile, setHasProfile] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [nickname, setNickname] = useState<string | null>(null);
   const [userPointsInfo, setUserPointsInfo] = useState<any>(null);
   const [step, setStep] = useState<"terms" | "profile" | "main" | "view-terms">(
-  "terms"
-);
+    "terms"
+  );
   const [userDorm, setUserDorm] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,7 +61,7 @@ function App() {
           setNickname(profile.nickname);
 
           setUserDorm(profile.dorm);
-          
+
           // Store profile in localStorage for easy access in other components
           localStorage.setItem(
             `userProfile_${user.id}`,
@@ -75,22 +78,38 @@ function App() {
       }
     };
 
-    fetchUserProfile();
+   
+      fetchUserProfile();
+    
   }, [user]);
 
-  // If profile is complete, skip onboarding
+  // // If profile is complete, skip onboarding
+  // useEffect(() => {
+  //   if (hasProfile) {
+  //     setStep("main");
+  //   }
+  // }, [hasProfile]);
+
+  // // Load stored terms acceptance on refresh
+  // useEffect(() => {
+  //   if (localStorage.getItem("TermsAccepted") === "true") {
+  //     setStep("profile");
+  //   }
+  // }, []);
+
   useEffect(() => {
-    if (hasProfile) {
+    if (!profileLoaded) return; // wait until user profile fetch is complete
+
+    const termsAccepted = localStorage.getItem("TermsAccepted") === "true";
+
+    if (!termsAccepted) {
+      setStep("terms");
+    } else if (!hasProfile) {
+      setStep("profile");
+    } else {
       setStep("main");
     }
-  }, [hasProfile]);
-
-  // Load stored terms acceptance on refresh
-  useEffect(() => {
-    if (localStorage.getItem("TermsAccepted") === "true") {
-      setStep("profile");
-    }
-  }, []);
+  }, [profileLoaded, hasProfile]);
 
   // Fetch user points info (including games played today)
   useEffect(() => {
@@ -122,6 +141,8 @@ function App() {
       </SignedOut>
 
       <SignedIn>
+        {profileLoaded && <FireAnimation />}
+
         {!profileLoaded ? (
           <div className="loading">Loading...</div>
         ) : step === "terms" ? (
@@ -156,8 +177,23 @@ function App() {
               ) : (
                 ""
               )}
-              <button onClick={() => setStep("profile")}>Edit Profile</button>
-              <button onClick={() => setStep("view-terms")}>View Terms</button>
+              {/* <button onClick={() => setStep("profile")}>Edit Profile</button>
+              <button onClick={() => setStep("view-terms")}>View Terms</button> */}
+
+              <div className="profile-actions">
+                <button
+                  className="action-button"
+                  onClick={() => setStep("profile")}
+                >
+                  ✏️ Edit Profile
+                </button>
+                <button
+                  className="action-button secondary"
+                  onClick={() => setStep("view-terms")}
+                >
+                  📜 View Terms
+                </button>
+              </div>
             </div>
             <div
               style={{
@@ -169,9 +205,19 @@ function App() {
                 gap: "10px",
               }}
             >
-              <SignOutButton />
+              <button
+                className="signout-button"
+                onClick={() => {
+                  localStorage.removeItem("TermsAccepted");
+                  signOut();
+                }}
+              >
+                Sign Out
+              </button>
+
               <UserButton />
             </div>
+
             <MapsGearup />
             {/**leaderboard below map */}
             {userDorm && <Leaderboard dormId={userDorm} />}
