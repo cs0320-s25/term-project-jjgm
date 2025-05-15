@@ -142,7 +142,7 @@ public class FirebaseUtilities implements StorageInterface {
       String nickname = doc.getString("nickname");
       Map<String, Integer> pointsMap = getUserPoints(uid);
       long total = pointsMap.values().stream().mapToLong(i -> i).sum();
-      int contribution = topGenre == null ? pointsMap.getOrDefault(topGenre, 0) : 0;
+      int contribution = topGenre != null ? pointsMap.getOrDefault(topGenre, 0) : 0;
 
       Map<String, Object> profile = new HashMap<>();
       profile.put("nickname", nickname);

@@ -6,7 +6,7 @@ interface Entry {
     nickname: string;
     dorm: string;
     score: number;
-    dormContribution?: number;
+    contribution?: number;
 }
 
 interface Props {
@@ -86,7 +86,7 @@ const Leaderboard: React.FC<Props> = ({dormId}) => {
                             <td>{e.nickname}</td>
                             <td>{e.dorm}</td>
                             <td>{e.score}</td>
-                            {view === 'dorm' && <td>{e.dormContribution}</td>}
+                            {view === 'dorm' && <td>{e.contribution ?? 0}</td>}
                             </tr>
                         ))}
                     </tbody>
