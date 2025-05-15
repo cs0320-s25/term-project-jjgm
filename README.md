@@ -7,8 +7,25 @@ Link to github repo: https://github.com/cs0320-s25/term-project-jjgm.git
 
 
 # Design Choices
+-Used canva to create front cover of the app design
+-FireAnimation.tsx and app.css was used to animate fire going behind the game screens after sign up
 
-##Frontend Game Logic: 
+### User Profile Featurs
+- Created two handlers, SaveProfileHandler and GetProfileHandler. These two handlers work together to manage user profile data. A 
+user is able to save a nickname and a dorm to the backend which is later retrieved using the users id. Used aoi endpoints to fetch
+this information from the backend to use in the front end. 
+- Created a profilepage.tsx so that when the user logs in through clerk and it is verified they are a brown student they can
+create their nickname and select their dorm which is then saved through saveUserProfile and calls on complete when finished allowinf them to
+move on to the game.
+- Before the user is able to make a profile they have to accept the terms and conditions that is layed out in TermsPage.tsx
+- When all of this is complete, in App.tsx it is checked to make sure that the user accepts the conditions, before they are allowed to go
+into the beatmaps game.
+-If the user has already crerated a profile, getUserProfile sends a reuquest to the backend to retrieve the user data so that the user
+can continue playing with this profile
+-Users are also able to go back and view the terms and conditions page or change their nickname and dorm in case they switch dorms in the 
+future
+
+### Frontend Game Logic: 
 - **“Play before Guess”**  
   Users must click ▶️ Play before their first Submit, ensuring they engage with the audio.  
 - **Adaptive Snippets**  
@@ -40,6 +57,8 @@ Link to github repo: https://github.com/cs0320-s25/term-project-jjgm.git
 
 - **Dorm Board**
     - UI persistence tests occasionally fail unpredictably. I'm unable to consistently replicate the issue, and my attempted fix produces inconsistent results. The situation is particularly confusing because the fix sometimes makes the failing test pass, but also causes the test to fail. I'm uncertain how to proceed given this contradictory behavior.
+- **Terms and Conditions**
+   - After editing the design of the app for some reason, when creating a new user the terms and conditions page did not pop up. So on sign out the terms being accepted is deleted from local storage. This makes the term page show up after every sign in but the user can still keep their username and dorm info they originally put in by just clicking exit. 
 
 
 # Tests
@@ -84,3 +103,5 @@ Frontend ==> In terminal (cd client --> npm install --> npm start)
 Open link for localhost 8000 
 
 # Collaboration
+“how to make fire float around” prompt. ChatGPT, 15 May. version, OpenAI, 15 May 2025, chat.openai.com/chat.
+- Used OpenAI to figure out how to create design of fire floating in the background and fix other designs on app
