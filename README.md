@@ -21,7 +21,7 @@ Link to github repo: https://github.com/cs0320-s25/term-project-jjgm.git
   JSON files from Deezer are bundled at build time—no runtime API dependency, for reliability.
 
 
-### Leaderboard Feature  _(martin)_
+### Leaderboard Feature  
 - **API Endpoints**  
   - `GET /leaderboard/global` → top 10 users by **total** heats earned across all genres  
   - `GET /leaderboard/dorm/:dormId` → top 10 residents by **contribution** in their dorm’s strongest genre  
@@ -45,7 +45,7 @@ Link to github repo: https://github.com/cs0320-s25/term-project-jjgm.git
 # Tests
 Frontend Game: 
 
-### Leaderboard Suite  _(martin)_
+### Leaderboard Suite  
 #### API handler tests (`tests/e2e/leaderboard.spec.ts`)
 - **Global**  
   - returns `response_type: "success"` + non-empty `entries` array  
