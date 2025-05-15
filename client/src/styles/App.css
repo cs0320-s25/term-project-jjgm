@@ -532,6 +532,8 @@
   background-color: #ffffffdd;
   border-radius: 15px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 1;
 }
 
 .leaderboard-title {
